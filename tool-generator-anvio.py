@@ -19,8 +19,8 @@ sys.path.append( os.path.abspath(os.path.join(os.path.dirname(__file__), os.pard
 import anvio
 
 
-ANVIO_VERSION = '6.2'#'6.1'#5.5.0'#'2.1.0' #FIXME! change to real version
-DEFAULT_CONTAINERS = ['<container type="docker">quay.io/biocontainers/anvio:6.2--0</container>'] #only used in realtime tool currently #<container type="docker">quay.io/biocontainers/anvio:5.5.0--0</container>'
+ANVIO_VERSION = '7'#'6.2'#'6.1'#5.5.0'#'2.1.0' #FIXME! change to real version
+DEFAULT_CONTAINERS = ['<container type="docker">quay.io/biocontainers/anvio:7--0</container>'] #only used in realtime tool currently #<container type="docker">quay.io/biocontainers/anvio:5.5.0--0</container>'
 #DEFAULT_CONTAINERS = ['<container type="docker">meren/anvio:5.4</container>'] #only used in realtime tool currently
 DEFAULT_INTERACTIVE_PORT = 8080
 
@@ -174,7 +174,7 @@ MACROS_TEMPLATE = """<macros>
 </macros>
 """
 
-galaxy_tool_citation ='''@ARTICLE{Blankenberg20-anvio,
+galaxy_tool_citation ='''@ARTICLE{Blankenberg21-anvio,
    author = {Daniel Blankenberg Lab, et al},
    title = {In preparation..},
    }'''
@@ -1468,13 +1468,17 @@ def main():
                         #    input = input.replace( "anvio.get_args(parser)", "def oynaxraoret_parsing():\n    anvio.get_args(parser)\n    return parser\n\n", 1)
                         if True:
                             input = input.replace( "argparse.ArgumentParser", "FakeArg")
+                            input = input.replace("ArgumentParser(", "FakeArg(")
                             #assert 'parser.parse_args()' in input, "Can't find end! %s" % ( filename )
                             #assert 'anvio.get_args(parser)' in input or 'parser.parse_args()' in input or 'parser.parse_known_args()' in input, "Can't find end! %s" % ( filename )
-                            if not ('anvio.get_args(%s)' % (parser_name) in input or '%s.parse_args()' % (parser_name) in input or '%s.parse_known_args()' % (parser_name) in input):
+                            if not ('%s.get_args(%s)' % (parser_name, parser_name) in input or 'anvio.get_args(%s)' % (parser_name) in input or '%s.parse_args()' % (parser_name) in input or '%s.parse_known_args()' % (parser_name) in input):
                                 print("ERROR: Can't find end! %s" % ( filename ))
                                 continue
                             inp_list = input.split( '\n' )
                             for i, line in enumerate( inp_list ):
+                                if '%s.get_args(%s)' % (parser_name, parser_name) in line:
+                                    indent = len(line) - len( line.lstrip( ' ' ) )
+                                    inp_list[i] = " " * indent + "return %s" % (parser_name) #"return parser.parse_args()"
                                 if '%s.parse_args()' % (parser_name) in line:
                                     indent = len(line) - len( line.lstrip( ' ' ) )
                                     inp_list[i] = " " * indent + "return %s" % (parser_name) #"return parser.parse_args()"
@@ -1498,7 +1502,7 @@ def main():
                                     #print 'added group', group_name
                                 else:
                                     for group_name in arg_groups:
-                                        if group_name in line:
+                                        if group_name in line.strip().split('.'):
                                             line = line.replace( group_name, parser_name )
                                             inp_list[i] = line
 
@@ -1514,6 +1518,7 @@ oynaxraoret_parameters = oynaxraoret_parsing(dict(locals()))""" % output
                             #oynaxraoret_parameters = [None]
                             #oynaxraoret_parameters = None
                             local_dict = {}
+                            sys.argv[0] = filename #anvio will do introspection to get prog name to build help, etc
                             exec( output, globals(), local_dict)
                             oynaxraoret_parameters = local_dict.get('oynaxraoret_parameters')
 
