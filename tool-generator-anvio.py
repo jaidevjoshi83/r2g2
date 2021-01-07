@@ -34,7 +34,7 @@ ONLY_DO_TOOLS = []#["anvi-import-state"]
 GALAXY_ANVIO_LOG_XML = '<data name="GALAXY_ANVIO_LOG" format="txt" label="${tool.name} on ${on_string}: Log"/>'
 
 PROVIDES_TO_TOOL_TYPE=OrderedDict(interactive='interactive')
-DEFAULT_TOOL_TYPE = 'default'
+DEFAULT_TOOL_TYPE = '' # 'default' #default is not allowed by planemo lint
 
 COLLECTION_UX_FAIL_NOTE_USER = "**NB: This requires a collection of type list for input. See https://galaxyproject.org/tutorials/collections/#a-simple-collection-example for more information.**"
 COLLECTION_UX_FAIL_NOTE = "<!-- Unfortunately, we are forced to use an explicit collection input here, see e.g.: https://github.com/galaxyproject/galaxy/issues/7392 -->"
@@ -42,7 +42,7 @@ COLLECTION_UX_FAIL_NOTE = "<!-- Unfortunately, we are forced to use an explicit 
 INTERACTIVE_PROFILE_VERSION=' profile="19.09"'
 
 #profile="19.01"
-TOOL_TEMPLATE = """<tool id="{{id}}" name="{{name}}" version="{{version}}" tool_type="{{tool_type}}"{{profile}}>
+TOOL_TEMPLATE = """<tool id="{{id}}" name="{{name}}" version="{{version}}"{{tool_type}}{{profile}}>
 {%- if description %}
     <description>{{ description }}</description>
 {%- endif %}
@@ -205,6 +205,7 @@ suite:
 
 class Parameter( object ):
     _output_startswith = ('output', 'export')
+    _default_default = ''
     def __init__( self, name, arg_short, arg_long, info_dict ):
         self._name = name
         self.name = name.replace( "-", '_' )
@@ -232,7 +233,7 @@ class Parameter( object ):
     def get_default( self ):
         default = self.info_dict.get( 'default', None )
         if default is None:
-            default = ''
+            default = self._default_default
         return quoteattr( str( default ) )
     def get_argument( self ):
         return quoteattr( self.arg_long )
@@ -336,6 +337,7 @@ class ParameterPortDefault( ParameterAlwaysValue ):
     value = DEFAULT_INTERACTIVE_PORT
 
 class ParameterBoolean( Parameter ):
+    _default_default = 'False'
     def get_type(self):
         return "boolean"
     def to_xml_param( self ):
@@ -1560,6 +1562,8 @@ oynaxraoret_parameters = oynaxraoret_parsing(dict(locals()))""" % output
 
                             #print '__version__', __version__
                             #print '__name__', __name__
+                            if tool_type:
+                                tool_type=' tool_type="%s"' % (tool_type)
                             template_dict = {
                                 'id': filename.replace( '-', '_'),
                                 'tool_type': tool_type,
