@@ -1,0 +1,108 @@
+<tool id="test_tool" name="test_tool" version="6.2" tool_type="default">
+    <description>test</description>
+    <requirements>
+        <requirement type="package" version="6.2">anvio</requirement>
+    </requirements>
+    <stdio>
+        <exit_code range="1:" />
+    </stdio>
+    <version_command>test_tool --version</version_command>
+    <command><![CDATA[
+        test_tool
+${verbose}
+
+${quietly}
+
+
+#if $str( $count ):
+    --count '${count}'
+#end if
+
+
+#if $str( $generator ):
+    --generator '${generator}'
+#end if
+
+
+#if $str( $mean ):
+    --mean '${mean}'
+#end if
+
+
+#if $str( $sd ):
+    --sd '${sd}'
+#end if
+
+
+#if $str( $mode ):
+    --mode '${mode}'
+#end if
+
+
+#if $str( $integers ):
+     '${integers}'
+#end if
+
+&> '${GALAXY_ANVIO_LOG}'
+
+    ]]></command>
+    <inputs>
+        <param name="verbose" type="boolean" label="Verbose" truevalue="--verbose" falsevalue="" checked="True" optional="True" argument="--verbose" help="Print extra output [default]"/>
+        <param name="quietly" type="boolean" label="Quietly" truevalue="--quietly" falsevalue="" checked="" optional="True" argument="--quietly" help="Print little output"/>
+        <param name="count" type="text" label="Count" value="5" optional="True" argument="--count" help="Number of random normals to generate [default %(default)s]"/>
+        <param name="generator" type="text" label="Generator" value="rnorm" optional="True" argument="--generator" help='Function to generate random deviates [default "%(default)s"]'/>
+        <param name="mean" type="text" label="Mean" value="0" optional="True" argument="--mean" help='Mean if generator == "rnorm" [default %(default)s]'/>
+        <param name="sd" type="text" label="Sd" value="1" optional="True" argument="--sd" help='Standard deviation if generator == "rnorm" [default %(default)s]'/>
+        <param name="mode" type="text" label="Mode" value="normal" optional="True" argument="--mode" help="The distribution mode to use. Choices are: normal, uniform, or binomial [default %(default)s]"/>
+        <param name="integers" type="text" label="Integers" value="" optional="True" argument="" help="an integer for the accumulator"/>
+    </inputs>
+    <outputs>
+        <data name="GALAXY_ANVIO_LOG" format="txt" label="${tool.name} on ${on_string}: Log"/>
+    </outputs>
+    <help><![CDATA[
+::
+
+  usage: test_tool [-h] [-v] [-q] [-c number] [--generator GENERATOR] [--mean MEAN] [--sd standard deviation] [--mode {normal,uniform,binomial}]
+                                 [--mode_3 {normal,uniform,binomial}] [--mode_1 {normal,uniform,binomial}] (--sum | --max)
+                                 N [N ...]
+  
+  test
+  
+  positional arguments:
+    N                     an integer for the accumulator
+  
+  optional arguments:
+    -h, --help            show this help message and exit
+    -v, --verbose         Print extra output [default]
+    -q, --quietly         Print little output
+    -c number, --count number
+                          Number of random normals to generate [default 5]
+    --generator GENERATOR
+                          Function to generate random deviates [default "rnorm"]
+    --mean MEAN           Mean if generator == "rnorm" [default 0]
+    --sd standard deviation
+                          Standard deviation if generator == "rnorm" [default 1]
+    --mode {normal,uniform,binomial}
+                          The distribution mode to use. Choices are: normal, uniform, or binomial [default normal]
+    --sum                 sum the integers
+    --max                 find the max of the integers
+  
+  Input Options:
+    --mode_3 {normal,uniform,binomial}
+                          The distribution mode to use. Choices are: normal, uniform, or binomial [default normal]
+  
+  Input Options:
+    --mode_1 {normal,uniform,binomial}
+                          The distribution mode to use. Choices are: normal, uniform, or binomial [default normal]
+  
+
+
+    ]]></help>
+    <citations>
+        <citation type="doi">10.7717/peerj.1319</citation>
+        <citation type="bibtex">@ARTICLE{Blankenberg20-anvio,
+   author = {Daniel Blankenberg Lab, et al},
+   title = {In preparation..},
+   }</citation>
+    </citations>
+</tool>

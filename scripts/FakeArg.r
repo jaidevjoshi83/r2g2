@@ -30,23 +30,16 @@ FakeArgs <- R6Class("FakeArgs",
             group_name <- paste0(private$name, "_group", private$n_groups)
             private$n_groups <- private$n_groups + 1
             arg_str <- sprintf("%s = %s.add_argument_group(%s)",group_name, private$name,  argparse:::convert_..._to_arguments("add_argument", ...))
-        
             self$my_dict[[group_name]] = group_name
-            
             self$my_list[[length(self$my_list) + 1]] <- arg_str
-
             args_list[[length(args_list) + 1]] <<- arg_str
-
             FakeGroup$new(self$my_list, group_name)
-
-            # self$my_list[[group_name]] <- arg_str
     },
 
     add_mutually_exclusive_group = function(required = FALSE) {
             group_name <- paste0(private$name, "_mutually_exclusive_group",
                                  private$n_mutually_exclusive_groups)
             private$n_mutually_exclusive_groups <- private$n_mutually_exclusive_groups + 1
-            
             arg_str <- sprintf("%s = %s.add_mutually_exclusive_group(%s)",
                            group_name, private$name,
                            ifelse(required, "required=True", ""))
@@ -140,7 +133,7 @@ dan_params = function (){
 
                                             
     
-    write_json(args_list, path = "./params_output_out.json", pretty = TRUE, auto_unbox = TRUE)
+    write_json(args_list, path = "./params_output_out_1.json", pretty = TRUE, auto_unbox = TRUE)
 
     }
 
