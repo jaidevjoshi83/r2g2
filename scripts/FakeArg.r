@@ -14,6 +14,13 @@ FakeArgs <- R6Class("FakeArgs",
       private$name <- name
     },
 
+      parse_args = function() {
+
+          print("argument parsed")
+
+        },
+
+
     add_argument = function(...) {
       arg_str <- sprintf(
         "%s.add_argument(%s)",
@@ -22,7 +29,6 @@ FakeArgs <- R6Class("FakeArgs",
       )
       # Append to list (use length+1 for next index)
       self$my_list[[length(self$my_list) + 1]] <- arg_str
-
       args_list[[length(args_list) + 1]] <<- arg_str
     },
 
@@ -66,7 +72,7 @@ FakeArgs <- R6Class("FakeArgs",
     private = list( python_code_list=NULL, name = NULL, n_mutually_exclusive_groups = 0, n_groups = 0)             
 )
 
-FakeArgumentParser = function () {
+FakeArgumentParser = function (description=NULL) {
     FakeArgs$new(name="parser")
 }
 
@@ -75,6 +81,11 @@ FakeGroup <- R6Class("FakeGroup", # nolint
         initialize = function(python_code_list, name) {
             private$python_code_list <- python_code_list
             private$name <- name
+        },
+        parse_args = function() {
+
+          print("argument parsed")
+
         },
         add_argument = function(...) {
             arg_str <- sprintf("%s.add_argument(%s)",
@@ -87,54 +98,52 @@ FakeGroup <- R6Class("FakeGroup", # nolint
 )
 
 
-dan_params = function (){
-    parser <- FakeArgumentParser()
+# tool_params = function (){
+#     parser <- FakeArgumentParser()
     
-    # specify our desired options 
-    # by default ArgumentParser will add an help option 
-    parser$add_argument("-v", "--verbose", action="store_true", default=TRUE, help="Print  extra output [default]")
-    parser$add_argument("-q", "--quietly", action="store_false", 
-        dest="verbose", help="Print little output")
-    parser$add_argument("-c", "--count", type="integer", default=5, 
-        help="Number of random normals to generate [default %(default)s]",
-        metavar="number")
-    parser$add_argument("--generator", default="rnorm", 
-        help = "Function to generate random deviates [default \"%(default)s\"]")
-    parser$add_argument("--mean", default=0, type="double", help="Mean if generator == \"rnorm\" [default %(default)s]")
-    parser$add_argument("--sd",
-            default=1,
-            type="double",
-            metavar="standard deviation",
-        help="Standard deviation if generator == \"rnorm\" [default %(default)s]")
+#     # specify our desired options 
+#     # by default ArgumentParser will add an help option 
+#     parser$add_argument("-v", "--verbose", action="store_true", default=TRUE, help="Print  extra output [default]")
+#     parser$add_argument("-q", "--quietly", action="store_false", 
+#         dest="verbose", help="Print little output")
+#     parser$add_argument("-c", "--count", type="integer", default=5, 
+#         help="Number of random normals to generate [default %(default)s]",
+#         metavar="number")
+#     parser$add_argument("--generator", default="rnorm", 
+#         help = "Function to generate random deviates [default \"%(default)s\"]")
+#     parser$add_argument("--mean", default=0, type="double", help="Mean if generator == \"rnorm\" [default %(default)s]")
+#     parser$add_argument("--sd",
+#             default=1,
+#             type="double",
+#             metavar="standard deviation",
+#         help="Standard deviation if generator == \"rnorm\" [default %(default)s]")
         
-    parser$add_argument("--mode", 
-                        choices=c("normal", "uniform", "binomial"), 
-                        default="normal", 
-                        help="The distribution mode to use. Choices are: normal, uniform, or binomial [default %(default)s]")
+#     parser$add_argument("--mode", 
+#                         choices=c("normal", "uniform", "binomial"), 
+#                         default="normal", 
+#                         help="The distribution mode to use. Choices are: normal, uniform, or binomial [default %(default)s]")
 
-    input_group <- parser$add_argument_group("Input Options")
-    input_group$add_argument("--mode_3", 
-                        choices=c("normal", "uniform", "binomial"), 
-                        default="normal", 
-                        help="The distribution mode to use. Choices are: normal, uniform, or binomial [default %(default)s]")
+#     input_group <- parser$add_argument_group("Input Options")
+#     input_group$add_argument("--mode_3", 
+#                         choices=c("normal", "uniform", "binomial"), 
+#                         default="normal", 
+#                         help="The distribution mode to use. Choices are: normal, uniform, or binomial [default %(default)s]")
     
-    input_group_1 <- parser$add_argument_group("Input Options")
-    input_group_1$add_argument("--mode_1", 
-                        choices=c("normal", "uniform", "binomial"), 
-                        default="normal", 
-                        help="The distribution mode to use. Choices are: normal, uniform, or binomial [default %(default)s]")
-    group <- parser$add_mutually_exclusive_group(required=TRUE)
-    group$add_argument('--sum', action='store_true', help='sum the integers')
-    group$add_argument('--max', action='store_true', help='find the max of the integers')
+#     input_group_1 <- parser$add_argument_group("Input Options")
+#     input_group_1$add_argument("--mode_1", 
+#                         choices=c("normal", "uniform", "binomial"), 
+#                         default="normal", 
+#                         help="The distribution mode to use. Choices are: normal, uniform, or binomial [default %(default)s]")
+#     group <- parser$add_mutually_exclusive_group(required=TRUE)
+#     group$add_argument('--sum', action='store_true', help='sum the integers')
+#     group$add_argument('--max', action='store_true', help='find the max of the integers')
 
-    # Add other arguments
-    parser$add_argument('integers', metavar='N', type='integer', nargs='+',
-                        help='an integer for the accumulator')
+#     # Add other arguments
+#     parser$add_argument('integers', metavar='N', type='integer', nargs='+',
+#                         help='an integer for the accumulator')
 
-                                            
-    
-    write_json(args_list, path = "./params_output_out_1.json", pretty = TRUE, auto_unbox = TRUE)
+#     write_json(args_list, path = "./params_output_out_1.json", pretty = TRUE, auto_unbox = TRUE)
 
-    }
+#     }
 
-dan_params()
+# tool_params()

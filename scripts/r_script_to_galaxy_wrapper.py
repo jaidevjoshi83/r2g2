@@ -3,7 +3,6 @@
 
 """A script to convert anvi'o python scripts to Galaxy Tools."""
 
-
 import argparse as argparse_original
 import sys
 import os
@@ -13,33 +12,14 @@ from jinja2 import Template
 import json
 
 
-#sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir ) ) )#, 'anvi')))
-
-sys.path.append( os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir ) ) )#, 'anvi')))
-
-
-# import anvio
-
-ANVIO_VERSION = '6.2'#'6.1'#5.5.0'#'2.1.0' #FIXME! change to real version
-DEFAULT_CONTAINERS = ['<container type="docker">quay.io/biocontainers/anvio:6.2--0</container>'] #only used in realtime tool currently #<container type="docker">quay.io/biocontainers/anvio:5.5.0--0</container>'
+DEFAULT_CONTAINERS = ['<container type="docker"> Test String </container>'] #only used in realtime tool currently #<container type="docker">quay.io/biocontainers/anvio:5.5.0--0</container>'
 #DEFAULT_CONTAINERS = ['<container type="docker">meren/anvio:5.4</container>'] #only used in realtime tool currently
 DEFAULT_INTERACTIVE_PORT = 8080
-
-TOOLS_TO_SKIP = ['anvi-upgrade', 'anvi-init-bam', 'anvi-gen-variability-matrix']#["anvi-display-contigs-stats","anvi-init-bam", "anvi-display-structure", "anvi-self-test", "anvi-run-workflow"]
-#INTERACTIVE_TOOLS = ["anvi-display-contigs-stats","anvi-init-bam", "anvi-display-structure", "anvi-self-test", "anvi-run-workflow"]
-#anvi-self-test is kept, may be useful, it does launch a server and webbrowser, and then wait...so maybe not keep
-#waits on anvi-display-contigs-stats, add a shutdown button for server?
-
-ONLY_DO_TOOLS = []#["anvi-import-state"]
-
-GALAXY_ANVIO_LOG_XML = '<data name="GALAXY_ANVIO_LOG" format="txt" label="${tool.name} on ${on_string}: Log"/>'
-
+# GALAXY_ANVIO_LOG_XML = '<data name="GALAXY_ANVIO_LOG" format="txt" label="${tool.name} on ${on_string}: Log"/>'
 PROVIDES_TO_TOOL_TYPE=OrderedDict(interactive='interactive')
 DEFAULT_TOOL_TYPE = 'default'
-
 COLLECTION_UX_FAIL_NOTE_USER = "**NB: This requires a collection of type list for input. See https://galaxyproject.org/tutorials/collections/#a-simple-collection-example for more information.**"
 COLLECTION_UX_FAIL_NOTE = "<!-- Unfortunately, we are forced to use an explicit collection input here, see e.g.: https://github.com/galaxyproject/galaxy/issues/7392 -->"
-
 INTERACTIVE_PROFILE_VERSION=' profile="19.09"'
 
 #profile="19.01"
@@ -179,29 +159,6 @@ galaxy_tool_citation ='''@ARTICLE{Blankenberg20-anvio,
    author = {Daniel Blankenberg Lab, et al},
    title = {In preparation..},
    }'''
-
-
-SHED_YML ="""name: anvio
-owner: blankenberg
-description: "Anvi’o: an advanced analysis and visualization platform for ‘omics data"
-homepage_url: https://github.com/merenlab/anvio
-long_description: |
-    Anvi’o is an analysis and visualization platform for ‘omics data. 
-    It brings together many aspects of today’s cutting-edge genomic, metagenomic, and metatranscriptomic analysis practices to address a wide array of needs.
-remote_repository_url: https://github.com/blankenberg/anvio-galaxy
-type: unrestricted
-categories:
-- Metagenomics
-auto_tool_repositories:
-  name_template: "{{ tool_id }}"
-  description_template: "Wrapper for the Anvi'o tool suite: {{ tool_name }}"
-suite:
-  name: "suite_anvio"
-  description: "Anvi’o: an advanced analysis and visualization platform for ‘omics data"
-  long_description: |
-    Anvi’o is an analysis and visualization platform for ‘omics data. 
-    It brings together many aspects of today’s cutting-edge genomic, metagenomic, and metatranscriptomic analysis practices to address a wide array of needs.
-"""
 
 
 class Parameter( object ):
@@ -800,8 +757,6 @@ class ParameterHMMProfileDIR_PATH( ParameterDIR_PATH ):
     def get_format( self ):
         return "anvio_hmm_profile"
 
-
-
 ###
 
 class ParameterINOUTCOMPOSITE_DATA_DIR_PATH( ParameterDB ):
@@ -845,9 +800,6 @@ class ParameterCOG_DATA_DIR_PATH( ParameterINOUTCOMPOSITE_DATA_DIR_PATH ):
 class ParameterPFAM_DATA_DIR_PATH( ParameterINOUTCOMPOSITE_DATA_DIR_PATH ):
     def get_format( self ):
         return "anvio_pfam_profile"
-
-
-
 
 
 
@@ -1287,6 +1239,7 @@ class FakeArg( argparse_original.ArgumentParser ):
             if 'metavar' not in args[1]:
                 print('no metavar', name)
         return rval
+    
     def blankenberg_get_params( self, params ):
         rval = []
         # print('blankenberg_get_params params', params)
@@ -1323,10 +1276,10 @@ class FakeArg( argparse_original.ArgumentParser ):
             if param is None:
                 print('no meta_var, using default', name, args[1])
                 #param = DEFAULT_PARAMETER( name, arg_short, arg_long, args[1] )
-                print("##################### args 1326")
-                print(args[1])
+                # print("##################### args 1326")
+                # print(args[1])
                 param = get_parameter( name, arg_short, arg_long, args[1] )
-                print("##################### args 1326")
+                # print("##################### args 1326")
 
             #print 'before copy', param.name, type(param)
             param = param.copy( name=name, arg_short=arg_short, arg_long=arg_long, info_dict=args[1] )
@@ -1420,43 +1373,27 @@ def main():
             else:
                 arg_short = arg
         
-        #print "name",param_name, arg_short, arg_long
-        #default = param_dict.get( 'default', '' )
-        #metavar = param_dict.get( 'metavar', '' )
-        #if metavar and metavar not in PARAMETER_BY_METAVAR.keys() and metavar not in unknown_metavar:
-        #    #print 'metavar', metavar
-        #    unknown_metavar.append( metavar )
-        
         param = get_parameter( param_name, arg_short, arg_long, param_dict )
         params[param_name] = param
         print (params)
     outpath = os.path.join( os.curdir, 'output' )
     if not os.path.exists( outpath ):
         os.mkdir( outpath )
-    with open(os.path.join(outpath, '.shed.yml'), 'w') as fh:
-        fh.write(SHED_YML)
 
     scripts_outpath = os.path.join( outpath, 'scripts' )
     if not os.path.exists( scripts_outpath ):
         os.mkdir( scripts_outpath )
 
     xml_count = 0
-    # for ( read_dir, write_dir ) in [ ( os.path.join( os.curdir, '..', 'bin' ), outpath ), ( os.path.join( os.curdir, '..', 'sandbox' ), scripts_outpath ) ]:
-        # for ( dirpath, dirnames, filenames ) in os.walk( read_dir ):
-            # for filename in sorted(filenames):
+
     arg_groups = []
-    # if filename in TOOLS_TO_SKIP:
-    #     #Don't want these tools
-    #     continue
-    # if ONLY_DO_TOOLS and filename not in ONLY_DO_TOOLS:
-    #     print('skipping', filename)
-    #     continue
+
     with open('./params_output_out_1.json') as testread:
         data = json.loads(testread.read())
         args_string = '\n    '.join(data)
 
 
-        arg_string_function = """def blankenberg_parsing(parent_locals):
+        arg_str_function = """def blankenberg_parsing(parent_locals):
     __description__ = "test"
     parser = FakeArg(description=__description__)\n    %s
 
@@ -1467,37 +1404,21 @@ def main():
 
 blankenberg_parameters = blankenberg_parsing(dict(locals()))"""%(args_string)
 
-
         __provides__ = [] # Reset provides since it is not always declared
         local_dict={}
         global_dict={}
-
         local_dict = {}
 
-        exec( arg_string_function, globals(), local_dict)
+        exec( arg_str_function, globals(), local_dict)
         blankenberg_parameters = local_dict.get('blankenberg_parameters')
 
         tool_type = DEFAULT_TOOL_TYPE
-        for provides, ttype in PROVIDES_TO_TOOL_TYPE.items():
-            if provides in __provides__:
-                tool_type = ttype
-                break
-        if tool_type == 'interactive':
-            containers = DEFAULT_CONTAINERS
-            realtime = [dict(
-                        name="%s server" % (filename),
-                        port=DEFAULT_INTERACTIVE_PORT,
-                        url=None
-                        )]
-            profile = INTERACTIVE_PROFILE_VERSION
-            print("%s is an InteractiveTool." % (filename))
-        else:
-            containers = []
-            realtime = None
-            profile = ''
+
+        containers = []
+        realtime = None
+        profile = ''
         
         filename = 'test_tool'
-
 
         template_dict = {
             'id': filename.replace( '-', '_'),
@@ -1526,9 +1447,6 @@ blankenberg_parameters = blankenberg_parsing(dict(locals()))"""%(args_string)
         with open("./my_first_tool.xml"  , 'w') as out:
             out.write(tool_xml)
             xml_count += 1
-
-        # else:
-        #     print('no parse!')
 
 if __name__ == '__main__':
 
