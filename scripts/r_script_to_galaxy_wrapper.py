@@ -11,7 +11,6 @@ from xml.sax.saxutils import quoteattr
 from jinja2 import Template
 import json
 
-
 DEFAULT_CONTAINERS = ['<container type="docker"> Test String </container>'] #only used in realtime tool currently #<container type="docker">quay.io/biocontainers/anvio:5.5.0--0</container>'
 #DEFAULT_CONTAINERS = ['<container type="docker">meren/anvio:5.4</container>'] #only used in realtime tool currently
 DEFAULT_INTERACTIVE_PORT = 8080
@@ -1199,8 +1198,6 @@ def get_parameter( param_name, arg_short, arg_long, info_dict ):
     return param( param_name, arg_short, arg_long, info_dict )
 
 
-
-
 class FakeArg( argparse_original.ArgumentParser ):
     def __init__( self, *args, **kwd ):
         # print('init')
@@ -1322,7 +1319,7 @@ class FakeArg( argparse_original.ArgumentParser ):
         for param in self.blankenberg_get_params( params ):
             if param.name not in SKIP_PARAMETER_NAMES and param.is_output:
                 rval.append( param.to_xml_output() )
-        rval.append( GALAXY_ANVIO_LOG_XML )
+        # rval.append( GALAXY_ANVIO_LOG_XML )
         return rval
 
 
@@ -1363,32 +1360,17 @@ def build_tool00000(plink_text_version):
 def main():
     #unknown_metavar = []
     params = {}
-    for param_name, param_tup in []:#list(anvio.D.items()):
-        arguments, param_dict = param_tup
-        arg_long = ''
-        arg_short = ''
-        for arg in arguments:
-            if arg.startswith( '--' ):
-                arg_long = arg
-            else:
-                arg_short = arg
-        
-        param = get_parameter( param_name, arg_short, arg_long, param_dict )
-        params[param_name] = param
-        print (params)
-    outpath = os.path.join( os.curdir, 'output' )
-    if not os.path.exists( outpath ):
-        os.mkdir( outpath )
 
-    scripts_outpath = os.path.join( outpath, 'scripts' )
-    if not os.path.exists( scripts_outpath ):
-        os.mkdir( scripts_outpath )
 
-    xml_count = 0
+    arg_groups = [] # need to be
 
-    arg_groups = []
+    print("##############################################")
 
-    with open('./params_output_out_1.json') as testread:
+    print(params)
+
+    print("##############################################")
+
+    with open('../test_json/params_output_out_1.json') as testread:
         data = json.loads(testread.read())
         args_string = '\n    '.join(data)
 
@@ -1425,11 +1407,11 @@ blankenberg_parameters = blankenberg_parsing(dict(locals()))"""%(args_string)
             'tool_type': tool_type,
             'profile': profile,
             'name': filename,
-            'version': ANVIO_VERSION,
+            'version': '',
             'description': blankenberg_parameters.description,
             #'macros': None,
             'version_command': '%s --version' % filename,
-            'requirements': ['<requirement type="package" version="%s">anvio</requirement>' % ANVIO_VERSION ],
+            'requirements': ['<requirement type="package" version="%s">anvio</requirement>' % '' ],
             'containers': containers,
             'realtime': realtime,
             'command': blankenberg_parameters.blankenberg_to_cmd_line(params, filename),
