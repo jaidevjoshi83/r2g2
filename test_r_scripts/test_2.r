@@ -14,7 +14,7 @@
 #  
 #  You should have received a copy of the GNU General Public License  
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.  
-suppressPackageStartupMessages(library("argparse"))
+
 
 # create parser object
 parser <- ArgumentParser()
@@ -46,14 +46,3 @@ parser$add_argument("--mode",
 args <- parser$parse_args()
 
 # print some progress messages to stderr if "quietly" wasn't requested
-if ( args$verbose ) { 
-    write("writing some verbose output to standard error...\n", stderr()) 
-}
-
-# do some operations based on user input
-if( args$generator == "rnorm") {
-    cat(paste(rnorm(args$count, mean=args$mean, sd=args$sd), collapse="\n"))
-} else {
-    cat(paste(do.call(args$generator, list(args$count)), collapse="\n"))
-}
-cat("\n")

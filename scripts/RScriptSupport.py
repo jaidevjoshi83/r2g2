@@ -1,6 +1,12 @@
 import json
+import os 
 
-def edit_r_script(r_script_path, edited_r_script_path, fakearg_path="../scripts/FakeArg.R", json_file_name="out.json"):
+
+def edit_r_script(r_script_path, edited_r_script_path, fakearg_path=None, json_file_name="out.json"):
+    
+    if  not fakearg_path :
+        fakearg_path  =  os.path.join(os.getcwd(), 'FakeArg.r')
+   
     with open(r_script_path,  'r' ) as fh:
         input = fh.read()
 
@@ -20,6 +26,7 @@ def edit_r_script(r_script_path, edited_r_script_path, fakearg_path="../scripts/
 
 
 def json_to_python(json_file):
+    print(json_file)
     with open(json_file) as testread:
         data = json.loads(testread.read())
         args_string = '\n    '.join(data)
@@ -27,9 +34,9 @@ def json_to_python(json_file):
         arg_str_function = f"""
 from r_script_to_galaxy_wrapper import FakeArg
 
-print("OKKKKKKK")
 
-def r_script_argument_parsing(parent_locals):
+
+def r_script_argument_parsing(parent_locals, FakeArg=FakeArg):
     __description__ = "test"
     
     print_test = "OOOOOOOOO"
@@ -48,24 +55,3 @@ print("SDFSDFSFD")
 """%(args_string)
     
     return arg_str_function
-
-
-# def json_to_python_1(json_file):
-#     with open(json_file) as testread:
-#         data = json.loads(testread.read())
-#         args_string = '\n    '.join(data)
-
-#         arg_str_function = f"""
-# def r_script_argument_parsing(parent_locals):
-#     __description__ = "test"
-#     print("OOOOOOOOO")
-
-#     parser = "dummy_parser_object"
-#     globals().update(parent_locals)
-#     return parser
-
-# blankenberg_parameters = r_script_argument_parsing(dict(locals()))
-# """
-#     return arg_str_function
-
-

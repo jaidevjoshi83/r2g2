@@ -1,5 +1,5 @@
 #edit R script to add custom fakearg parser 
-#Execute edited R script to extract arguments as python arguments to a json file 
+#Execute edited R script to extract arguments as python code to a json file 
 #Build python script based on json string to get the parameter dictionary 
 #Generates wrapper 
 import argparse
@@ -11,9 +11,9 @@ import shutil
 from r_script_to_galaxy_wrapper import DEFAULT_TOOL_TYPE, TOOL_TEMPLATE, FakeArg, format_help, galaxy_tool_citation, Template
 
 def main(r_script, out_dir):
-    # Get current working directory
+    
     current_dir = os.getcwd()
-    # Create a temp directory inside current working directory
+
     temp_dir = tempfile.mkdtemp(dir=current_dir)
 
     if not os.path.exists(os.path.join(current_dir, out_dir)):
@@ -21,13 +21,14 @@ def main(r_script, out_dir):
     edited_r_script  = os.path.join(temp_dir, "%s_edited.r"%(r_script.split('/')[len(r_script.split('/'))-1].split('.')[0])) 
     json_out  = os.path.join(temp_dir, "%s.json"%(r_script.split('/')[len(r_script.split('/'))-1].split('.')[0])) 
 
+
     edit_r_script(r_script, edited_r_script, json_file_name=json_out )
-    # Run the R script
+
     subprocess.run(['Rscript',  edited_r_script])
 
     python_code_as_string = json_to_python(json_out)
 
-    __provides__ = [] # Reset provides since it is not always declared
+    __provides__ = []
     local_dict={}
     global_dict={}
     local_dict={}
@@ -62,14 +63,14 @@ def main(r_script, out_dir):
         #'tests': None,
         #'tests': { output:'' },
         'help': format_help(extracted_parameters.format_help().replace( os.path.basename(__file__), filename)),
-        'doi': ['10.7717/peerj.1319'],
+        'doi': [''],
         'bibtex_citations': [galaxy_tool_citation]
         }
 
     tool_xml = Template(TOOL_TEMPLATE).render( **template_dict )
 
-    print(r_script.split('/')[len(r_script.split('/'))-1].split('.')[0])
-    with open(os.path.join(out_dir, "my_first_tool.xml")  , 'w') as out:
+
+    with open(os.path.join(out_dir, "my_first_tool_test.xml")  , 'w') as out:
         out.write(tool_xml)
 
     if os.path.exists(temp_dir):
