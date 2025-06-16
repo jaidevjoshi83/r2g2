@@ -32,26 +32,20 @@ def json_to_python(json_file):
         args_string = '\n    '.join(data)
 
         arg_str_function = f"""
+#!/usr/bin/env python
 from r_script_to_galaxy_wrapper import FakeArg
-
 
 
 def r_script_argument_parsing(parent_locals, FakeArg=FakeArg):
     __description__ = "test"
     
-    print_test = "OOOOOOOOO"
-
     parser = FakeArg(description=__description__)\n    %s
-
     globals().update(parent_locals)
 
     return parser
 
-print("OKKsdfsfds")
-
 blankenberg_parameters = r_script_argument_parsing(dict(locals()))
 
-print("SDFSDFSFD")
 """%(args_string)
     
     return arg_str_function

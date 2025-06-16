@@ -28,53 +28,56 @@ def main(r_script, out_dir):
 
     python_code_as_string = json_to_python(json_out)
 
-    __provides__ = []
-    local_dict={}
-    global_dict={}
-    local_dict={}
 
-    exec( python_code_as_string, globals(), local_dict)
-    extracted_parameters = local_dict.get('blankenberg_parameters')
-    tool_type = DEFAULT_TOOL_TYPE
+    print(python_code_as_string)
 
-    params = {}
+    # __provides__ = []
+    # local_dict={}
+    # global_dict={}
+    # local_dict={}
 
-    containers = []
-    realtime = None
-    profile = ''
+    # exec( python_code_as_string, globals(), local_dict)
+    # extracted_parameters = local_dict.get('blankenberg_parameters')
+    # tool_type = DEFAULT_TOOL_TYPE
+
+    # params = {}
+
+    # containers = []
+    # realtime = None
+    # profile = ''
     
-    filename = 'test_tool'
+    # filename = 'test_tool'
 
-    template_dict = {
-        'id': filename.replace( '-', '_'),
-        'tool_type': tool_type,
-        'profile': profile,
-        'name': filename,
-        'version': '',
-        'description': extracted_parameters.description,
-        #'macros': None,
-        'version_command': '%s --version' % filename,
-        'requirements': ['<requirement type="package" version="%s">anvio</requirement>' % '' ],
-        'containers': containers,
-        'realtime': realtime,
-        'command': extracted_parameters.blankenberg_to_cmd_line(params, filename),
-        'inputs': extracted_parameters.blankenberg_to_inputs(params),
-        'outputs': extracted_parameters.blankenberg_to_outputs(params),
-        #'tests': None,
-        #'tests': { output:'' },
-        'help': format_help(extracted_parameters.format_help().replace( os.path.basename(__file__), filename)),
-        'doi': [''],
-        'bibtex_citations': [galaxy_tool_citation]
-        }
+    # template_dict = {
+    #     'id': filename.replace( '-', '_'),
+    #     'tool_type': tool_type,
+    #     'profile': profile,
+    #     'name': filename,
+    #     'version': '',
+    #     'description': extracted_parameters.description,
+    #     #'macros': None,
+    #     'version_command': '%s --version' % filename,
+    #     'requirements': ['<requirement type="package" version="%s">anvio</requirement>' % '' ],
+    #     'containers': containers,
+    #     'realtime': realtime,
+    #     'command': extracted_parameters.blankenberg_to_cmd_line(params, filename),
+    #     'inputs': extracted_parameters.blankenberg_to_inputs(params),
+    #     'outputs': extracted_parameters.blankenberg_to_outputs(params),
+    #     #'tests': None,
+    #     #'tests': { output:'' },
+    #     'help': format_help(extracted_parameters.format_help().replace( os.path.basename(__file__), filename)),
+    #     'doi': [''],
+    #     'bibtex_citations': [galaxy_tool_citation]
+    #     }
 
-    tool_xml = Template(TOOL_TEMPLATE).render( **template_dict )
+    # tool_xml = Template(TOOL_TEMPLATE).render( **template_dict )
 
 
-    with open(os.path.join(out_dir, "my_first_tool_test.xml")  , 'w') as out:
-        out.write(tool_xml)
+    # with open(os.path.join(out_dir, "my_first_tool_test.xml")  , 'w') as out:
+    #     out.write(tool_xml)
 
-    if os.path.exists(temp_dir):
-        shutil.rmtree(temp_dir)
+    # if os.path.exists(temp_dir):
+    #     shutil.rmtree(temp_dir)
  
 if __name__=='__main__':
 
