@@ -10,7 +10,7 @@ parser <- ArgumentParser()
 parser$add_argument("-v", "--verbose", action="store_true", default=TRUE, help="Print  extra output [default]")
 parser$add_argument("-q", "--quietly", action="store_false", 
     dest="verbose", help="Print little output")
-parser$add_argument("-c", "--count", type="integer", default=5, 
+parser$add_argument("-c", "--count", nargs='+', type="integer", default=5, 
     help="Number of random normals to generate [default %(default)s]",
     metavar="number")
 parser$add_argument("--generator", default="rnorm", 

@@ -551,9 +551,8 @@ class ParameterProfileDB( ParameterDB ):
 
     def get_post_cmd_line( self ):
         return ''
-
-
 ###
+
 class ParameterPROFILE( ParameterFILE_PATH ):
     def get_format( self ):
         return "anvio_profile_db"
@@ -1287,7 +1286,10 @@ class FakeArg( argparse_original.ArgumentParser ):
         pre_cmd = []
         post_cmd = []
         rval = filename or self.prog
+
+   
         for param in self.blankenberg_get_params( params ):
+            print("#################>", param)
             if param.name not in SKIP_PARAMETER_NAMES:
                 pre = param.get_pre_cmd_line()
                 if pre:

@@ -26,7 +26,7 @@ def edit_r_script(r_script_path, edited_r_script_path, fakearg_path=None, json_f
 
 
 def json_to_python(json_file):
-    print(json_file)
+    # print(json_file)
     with open(json_file) as testread:
         data = json.loads(testread.read())
         args_string = '\n    '.join(data)

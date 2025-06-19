@@ -6,26 +6,26 @@
 import os
 import string
 
-# Constants
 SAFE_CHARS = list(x for x in string.ascii_letters + string.digits + '_')
 
 def simplify_text(text):
-    """Convert text to a simplified form suitable for IDs."""
+    """Replace special characters with underscores for safe filenames and ids."""
     return ''.join([x if x in SAFE_CHARS else '_' for x in text])
 
 def to_docstring(page, section_names=None):
-    """Convert an R help page to a Python docstring.
+    """
+    Convert R help page to a Python docstring.
     
-    Args:
-        page: The R help page
-        section_names: List of section names to consider. If None, all sections are used.
-        
+    Parameters:
+    page: R help page object
+    section_names: list of section names to consider. If None all sections are used.
+    
     Returns:
-        A string that can be used as a Python docstring.
+    A string that can be used as a Python docstring.
     """
     if section_names is None:
         section_names = list(page.sections.keys())
-    
+        
     def walk(s, tree, depth=0):
         if not isinstance(tree, str):
             for elt in tree:
@@ -46,14 +46,14 @@ def to_docstring(page, section_names=None):
         s = []
         walk(s, page.sections[name], depth=1)
         
-        rval.append(f'  {os.linesep}  ')
-        rval.append("".join(s).replace(os.linesep, f'%s  ' % (os.linesep)))
+        rval.append('  %s  ' % (os.linesep))
+        rval.append("".join(s).replace(os.linesep, '%s  ' % (os.linesep)))
         rval.append(os.linesep)
         rval.append(os.linesep)
     return ''.join(rval).strip()
 
 def unroll_vector_to_text(section):
-    """Convert a vector section to plain text."""
+    """Convert an R vector section to plain text."""
     def walk(s, tree, depth=0):
         if not isinstance(tree, str):
             for elt in tree:

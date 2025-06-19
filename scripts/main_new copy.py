@@ -5,9 +5,11 @@ import subprocess
 import tempfile
 import os
 import shutil
-from r_script_to_galaxy_wrapper import DEFAULT_TOOL_TYPE, TOOL_TEMPLATE, FakeArg, format_help, galaxy_tool_citation, Template
+import  tool_generator_anvio as ta
 
 
+print(dir(ta))
+#from r_script_to_galaxy_wrapper import DEFAULT_TOOL_TYPE, TOOL_TEMPLATE, FakeArg, format_help, galaxy_tool_citation, Template
 
 def main(r_script, out_dir):
 
@@ -164,7 +166,7 @@ blankenberg_parameters = blankenberg_parsing(dict(locals()))""" % output
             'profile': profile,
             'name': filename,
             'version': ANVIO_VERSION,
-            'description': blankenberg_parameters.description,
+            'description': ç.description,
             #'macros': None,
             'version_command': '%s --version' % filename,
             'requirements': ['<requirement type="package" version="%s">anvio</requirement>' % ANVIO_VERSION ],
@@ -191,34 +193,34 @@ blankenberg_parameters = blankenberg_parsing(dict(locals()))""" % output
         print('no parse!')
 # else:
 #     print('not python')
-print("Created %i anvi'o Galaxy tools." % (1))
-'''
-    print filename,
-    line = fh.readline()
-    if line.startswith( "#!/usr/bin/env python" ):
-        print 'python'
-        args = []
-        while True:
-            line = fh.readline()
-            if not line:
-                break
-            line = line.strip()
-            if 'argparse.ArgumentParser' in line:
-                args.append( line )
-                while True:
-                    line = fh.readline()
-                    if not line:
-                        break
-                    line = line.strip()
-                    if 
+# print("Created %i anvi'o Galaxy tools." % (1))
+# '''
+#     print filename,
+#     line = fh.readline()
+#     if line.startswith( "#!/usr/bin/env python" ):
+#         print 'python'
+#         args = []
+#         while True:
+#             line = fh.readline()
+#             if not line:
+#                 break
+#             line = line.strip()
+#             if 'argparse.ArgumentParser' in line:
+#                 args.append( line )
+#                 while True:
+#                     line = fh.readline()
+#                     if not line:
+#                         break
+#                     line = line.strip()
+#                     if 
 
-            if line.startswith( 'parser' ):
-                args.append( line )
-        print 'args', args
-        assert 'description' in args[0], args[0]
-    else:
-        print line
-'''
+#             if line.startswith( 'parser' ):
+#                 args.append( line )
+#         print 'args', args
+#         assert 'description' in args[0], args[0]
+#     else:
+#         print line
+# '''
 
 #print 'unknown_metavar', unknown_metavar
 #print 'anvio.D len', len(anvio.D)
