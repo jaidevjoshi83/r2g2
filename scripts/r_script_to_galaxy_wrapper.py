@@ -212,7 +212,7 @@ class Parameter( object ):
             help = help.format(**self.info_dict)
         except KeyError as e:
             print('FIXME: formatting help failed')
-            print(e)
+            # print(e)
         if extra:
             help = "%s %s" % (help, extra)
         help = help.replace( '\n', ' ' ).replace( '\r', ' ' ).replace( '\t', ' ' ).strip()
@@ -444,7 +444,7 @@ class ParameterContigsDB( ParameterDB ):
         super( ParameterContigsDB, self ).__init__( *args, **kwd )
         self.is_output = True
         self.is_input = not self.name.startswith( self._output_startswith )
-        print('is_input', self.name, self.is_input)
+        # print('is_input', self.name, self.is_input)
         self.is_contigs = True
         self.is_samples = False
         self.basename = 'CONTIGS'
@@ -453,7 +453,7 @@ class ParameterContigsDB( ParameterDB ):
             self.is_samples = True
             self.basename = 'SAMPLES'
         #elif self.info_dict.get( 'METAVAR', None ) == 'CONTIGS-DB':
-        print('is contigs', self.name, self.is_contigs)
+        # print('is contigs', self.name, self.is_contigs)
         #self.is_contigs = self.info_dict.get( 'default', None ) == 'CONTIGS.db'
     def get_format( self ):
         if self.is_samples:
@@ -1188,11 +1188,13 @@ def get_parameter( param_name, arg_short, arg_long, info_dict ):
         param = ParameterBoolean
     else:
         metavar = info_dict.get( 'metavar' )
-        print("metavar is dan: %s, %s, %s" % ( param_name, metavar, info_dict ) )
+        # print("metavar is dan: %s, %s, %s" % ( param_name, metavar, info_dict ) )
         if metavar is None:
-            print("metavar is None: %s, %s" % ( param_name, metavar ) )
+            pass
+            # print("metavar is None: %s, %s" % ( param_name, metavar ) )
         elif metavar not in PARAMETER_BY_METAVAR:
-            print("metavar not defined for: %s, %s" % ( param_name, metavar ) )
+            pass
+            #print("metavar not defined for: %s, %s" % ( param_name, metavar ) )
         param = PARAMETER_BY_METAVAR.get( metavar, DEFAULT_PARAMETER )
     return param( param_name, arg_short, arg_long, info_dict )
 
@@ -1206,9 +1208,11 @@ class FakeArg( argparse_original.ArgumentParser ):
         super( FakeArg, self ).__init__( *args, **kwd )
 
     def add_argument( self, *args, **kwd ):
-        # print('add argument')
-        # print('args', args)
-        # print('kwd', kwd)
+        print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+        print('add argument')
+        print('args', args)
+        print('kwd', kwd)
+        print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
         self._blankenberg_args.append( ( args, kwd ) )
         super( FakeArg, self ).add_argument( *args, **kwd )
 
@@ -1233,7 +1237,8 @@ class FakeArg( argparse_original.ArgumentParser ):
                     name = arg
             rval[name] = args[1]
             if 'metavar' not in args[1]:
-                print('no metavar', name)
+                #print('no metavar', name)
+                pass
         return rval
     
     def blankenberg_get_params( self, params ):
@@ -1255,7 +1260,8 @@ class FakeArg( argparse_original.ArgumentParser ):
                     name = arg
             param = None
             if name in params:
-                print("%s (name) is in params" % (name) )
+                #print("%s (name) is in params" % (name) )
+                pass
                 param = params[name]
             #if 'metavar' in args[1]:
                 #if args[1]['metavar'] in params:
@@ -1264,13 +1270,14 @@ class FakeArg( argparse_original.ArgumentParser ):
                 if name in PARAMETER_BY_NAME:
                     param = PARAMETER_BY_NAME[name]( name, arg_short, arg_long, args[1] )
             if param is None:
-                print("Param is None")
+                # print("Param is None")
+                pass
                 metavar = args[1].get( 'metavar', None )
                 # print("asdf metavar",args[1],metavar)
                 if metavar and metavar in PARAMETER_BY_METAVAR:
                     param = PARAMETER_BY_METAVAR[metavar]( name, arg_short, arg_long, args[1] )
             if param is None:
-                print('no meta_var, using default', name, args[1])
+                # print('no meta_var, using default', name, args[1])
                 #param = DEFAULT_PARAMETER( name, arg_short, arg_long, args[1] )
                 # print("##################### args 1326")
                 # print(args[1])
@@ -1289,7 +1296,7 @@ class FakeArg( argparse_original.ArgumentParser ):
 
    
         for param in self.blankenberg_get_params( params ):
-            print("#################>", param)
+            # print("#################>", param)
             if param.name not in SKIP_PARAMETER_NAMES:
                 pre = param.get_pre_cmd_line()
                 if pre:

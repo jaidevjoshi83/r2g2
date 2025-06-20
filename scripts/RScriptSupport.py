@@ -29,7 +29,28 @@ def json_to_python(json_file):
     # print(json_file)
     with open(json_file) as testread:
         data = json.loads(testread.read())
-        args_string = '\n    '.join(data)
+
+    parser_name = 'parser'
+    arg_groups = []
+    inp_list = []
+    mutually_ex_groups = []
+
+    for line in data:
+        if 'add_argument_group' in line:
+            group_name = line.strip().split()[0]
+            arg_groups.append( group_name )
+            #print 'added group', group_name    
+        elif "add_mutually_exclusive_group" in line:
+            mutually_ex_name = line.strip().split()[0]
+            mutually_ex_groups.append(mutually_ex_name)
+        else:
+            for group_name in arg_groups:
+                if group_name in line:
+                    line = line.replace( group_name, parser_name )
+                    inp_list.append(line)
+            
+
+        args_string = '\n    '.join(inp_list)
 
         arg_str_function = f"""
 #!/usr/bin/env python
