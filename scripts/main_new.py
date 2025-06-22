@@ -56,7 +56,7 @@ def main(r_script, out_dir):
         #'tests': None,
         #'tests': { output:'' },
         'help': format_help(blankenberg_parameters.format_help().replace( os.path.basename(__file__), filename)),
-        'doi': ['10.7717/peerj.1319'],
+        'doi': [''],
         'bibtex_citations': [galaxy_tool_citation]
         }
 
