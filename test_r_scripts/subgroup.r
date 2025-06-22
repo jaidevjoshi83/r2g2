@@ -1,4 +1,5 @@
 library(argparse)
+library(ggplot2)
 
 #Create the main parser
 parser <- ArgumentParser(description = "Example script with all possible argument types")

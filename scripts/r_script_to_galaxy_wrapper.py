@@ -14,7 +14,7 @@ import json
 
 
 #profile="19.01"
-TOOL_TEMPLATE = """<tool id="{{id}}" name="{{name}}" version="{{version}}" tool_type="{{tool_type}}"{{profile}}>
+TOOL_TEMPLATE = """<tool id="{{id}}" name="{{name}}" version="{{version}}" >
 {%- if description %}
     <description>{{ description }}</description>
 {%- endif %}
@@ -29,12 +29,7 @@ TOOL_TEMPLATE = """<tool id="{{id}}" name="{{name}}" version="{{version}}" tool_
 {%- endif %}
 {%- else %}
     <requirements>
-{%- for requirement in requirements %}
-        {{ requirement }}
-{%- endfor %}
-{%- for container in containers %}
-        {{ container }}
-{%- endfor %}
+    {{ requirements }}
     </requirements>
 {%- if realtime %}
     <entry_points>
@@ -294,8 +289,8 @@ class ParameterBoolean( Parameter ):
                 self.get_optional(),
                 self.get_argument(), 
                 self.get_help(),
-
             )
+    
     def to_cmd_line( self ):
         return "${%s}\n" % ( self.name )
 
@@ -962,7 +957,7 @@ def get_parameter( param_name, arg_short, arg_long, info_dict ):
            # pass
             print("metavar is None: %s, %s" % ( param_name, metavar ) )
         elif metavar not in PARAMETER_BY_METAVAR:
-           # pass
+       
             print("metavar not defined for: %s, %s" % ( param_name, metavar ) )
         param = PARAMETER_BY_METAVAR.get( metavar, DEFAULT_PARAMETER )
     return param( param_name, arg_short, arg_long, info_dict )

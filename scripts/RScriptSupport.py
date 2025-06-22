@@ -26,18 +26,19 @@ def edit_r_script(r_script_path, edited_r_script_path, fakearg_path=None, json_f
         fh.write(new_input)
 
 def return_dependencies(r_script_path):
-    print(r_script_path)
-    packages = {}
+    package_list = []
+    packages = {'name':None, 'version':None}
     with open(r_script_path,  'r' ) as fh:
         input = fh.read()
         for i in input.split('\n'):
             if "library(" in i:
                 package_name = i.split('(')[1].strip(')')
                 package_importr = rpackages.importr( package_name)
-                packages[package_name] =  package_importr.__version__
-    return packages
-
-                
+                packages['name'] =  package_name
+                packages['version'] =  package_importr.__version__
+                package_list.append((package_name, package_importr.__version__))
+    return package_list
+   
 def json_to_python(json_file):
     # print(json_file)
     with open(json_file) as testread:

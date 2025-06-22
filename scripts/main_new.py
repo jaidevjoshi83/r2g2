@@ -8,8 +8,8 @@ from r_script_to_galaxy_wrapper import *
 from dependency_generator import  return_galax_tag
 
 def main(r_script, out_dir):
-    dependencies = return_dependencies(r_script)
-    print(dependencies)
+    dependency_tag = "\n".join([return_galax_tag(i[0], i[1]) for i in return_dependencies(r_script)])
+    print("14", dependency_tag)
     current_dir = os.getcwd()
     temp_dir = tempfile.mkdtemp(dir=current_dir)
 
@@ -21,13 +21,9 @@ def main(r_script, out_dir):
     edit_r_script(r_script, edited_r_script, json_file_name=json_out )
     subprocess.run(['Rscript',  edited_r_script])
     python_code_as_string = json_to_python(json_out)
-    # test = open("./test.py", "w")
     input = python_code_as_string
 
     params = {}
-    param_name = 'parser'
-    arg_groups = []
-    parser_name = 'parent_parser'
 
     __provides__ = [] # Reset provides since it is not always declared
     local_dict={}
@@ -38,15 +34,8 @@ def main(r_script, out_dir):
     blankenberg_parameters = local_dict.get('blankenberg_parameters')
 
     DEFAULT_TOOL_TYPE = "test_tools"
-
     tool_type = DEFAULT_TOOL_TYPE
-    # for provides, ttype in PROVIDES_TO_TOOL_TYPE.items():
-    #     if provides in __provides__:
-    #         tool_type = ttype
-    #         break
-
     profile = '3.10'
-
 
     filename = 'test-file'
     test_print =  blankenberg_parameters.blankenberg_to_cmd_line(params, filename)
@@ -60,7 +49,7 @@ def main(r_script, out_dir):
         'description': blankenberg_parameters.description,
         #'macros': None,
         'version_command': '%s --version' % filename,
-        'requirements': '',
+        'requirements': dependency_tag,
         'command': blankenberg_parameters.blankenberg_to_cmd_line(params, filename),
         'inputs': blankenberg_parameters.blankenberg_to_inputs(params),
         'outputs': blankenberg_parameters.blankenberg_to_outputs(params),
