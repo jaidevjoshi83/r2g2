@@ -13,14 +13,9 @@ FakeArgs <- R6Class("FakeArgs",
       self$my_list <- list()  # Initialize the list
       private$name <- name
     },
-
       parse_args = function() {
-
           print("argument parsed")
-
         },
-
-
     add_argument = function(...) {
       arg_str <- sprintf(
         "%s.add_argument(%s)",
@@ -68,12 +63,11 @@ FakeArgs <- R6Class("FakeArgs",
       print(self$my_list)
     }
   ),
-    
     private = list( python_code_list=NULL, name = NULL, n_mutually_exclusive_groups = 0, n_groups = 0)             
 )
 
 FakeArgumentParser = function (description=NULL) {
-    FakeArgs$new(name="parser")
+  FakeArgs$new(name="parser")
 }
 
 FakeGroup <- R6Class("FakeGroup", # nolint
@@ -83,9 +77,7 @@ FakeGroup <- R6Class("FakeGroup", # nolint
             private$name <- name
         },
         parse_args = function() {
-
           print("argument parsed")
-
         },
         add_argument = function(...) {
             arg_str <- sprintf("%s.add_argument(%s)",

@@ -11,15 +11,7 @@ from xml.sax.saxutils import quoteattr
 from jinja2 import Template
 import json
 
-DEFAULT_CONTAINERS = ['<container type="docker"> Test String </container>'] #only used in realtime tool currently #<container type="docker">quay.io/biocontainers/anvio:5.5.0--0</container>'
-#DEFAULT_CONTAINERS = ['<container type="docker">meren/anvio:5.4</container>'] #only used in realtime tool currently
-DEFAULT_INTERACTIVE_PORT = 8080
-# GALAXY_ANVIO_LOG_XML = '<data name="GALAXY_ANVIO_LOG" format="txt" label="${tool.name} on ${on_string}: Log"/>'
-PROVIDES_TO_TOOL_TYPE=OrderedDict(interactive='interactive')
-DEFAULT_TOOL_TYPE = 'default'
-COLLECTION_UX_FAIL_NOTE_USER = "**NB: This requires a collection of type list for input. See https://galaxyproject.org/tutorials/collections/#a-simple-collection-example for more information.**"
-COLLECTION_UX_FAIL_NOTE = "<!-- Unfortunately, we are forced to use an explicit collection input here, see e.g.: https://github.com/galaxyproject/galaxy/issues/7392 -->"
-INTERACTIVE_PROFILE_VERSION=' profile="19.09"'
+
 
 #profile="19.01"
 TOOL_TEMPLATE = """<tool id="{{id}}" name="{{name}}" version="{{version}}" tool_type="{{tool_type}}"{{profile}}>
@@ -255,7 +247,6 @@ class Parameter( object ):
     def __str__( self ):
         return "%s\n%s\n" % ( self.to_xml_param(), self.to_cmd_line() )
 
-
 class ParameterDiscard( Parameter ):
     def get_type(self):
         return "string"
@@ -288,9 +279,6 @@ class ParameterAlwaysValue( Parameter ):
         return ''
     def to_cmd_line( self ):
         return "%s '%s'" % (self.arg_long, self.value)
-
-class ParameterPortDefault( ParameterAlwaysValue ):
-    value = DEFAULT_INTERACTIVE_PORT
 
 class ParameterBoolean( Parameter ):
     def get_type(self):
@@ -357,11 +345,13 @@ class ParameterFILE_PATH( Parameter ):
         if ',' in self.get_format():
             return 'format_source="input_%s"' % ( self.name )
         return ''
+    
     def get_metadata_source(self):
         return 'metadata_source="input_%s"' % ( self.name )
         if ',' in self.get_format():
             return 'format_source="input_%s"' % ( self.name )
         return ''
+    
     def to_xml_output( self ):
         #print ('toxml putput', self.name, self.get_format() ) 
         return """<data name=%s format="%s" %s %s label=%s/>""" % \
@@ -372,6 +362,7 @@ class ParameterFILE_PATH( Parameter ):
                 self.get_metadata_source(),
                 self.get_output_label(),
             )
+    
     def to_cmd_line( self ):
         text = ''
         cmd_txt =  "%s '${%s}'" % ( self.get_arg_text(), self.get_input_cmd_name() )
@@ -384,13 +375,11 @@ class ParameterFILE_PATH( Parameter ):
             text = "%s\n" % cmd_txt
         return text
 
-
 class ParameterREPORT_FILE_PATH( ParameterFILE_PATH ):
     def __init__( self, *args, **kwd ):
         super( ParameterREPORT_FILE_PATH, self ).__init__( *args, **kwd )
         self.is_input = False
         self.is_output = True
-
 
 class ParameterDB( ParameterFILE_PATH ):
     def __init__( self, *args, **kwd ):
@@ -439,59 +428,7 @@ class ParameterDB( ParameterFILE_PATH ):
         return ''
 
 
-class ParameterContigsDB( ParameterDB ):
-    def __init__( self, *args, **kwd ):
-        super( ParameterContigsDB, self ).__init__( *args, **kwd )
-        self.is_output = True
-        self.is_input = not self.name.startswith( self._output_startswith )
-        # print('is_input', self.name, self.is_input)
-        self.is_contigs = True
-        self.is_samples = False
-        self.basename = 'CONTIGS'
-        if self.info_dict.get( 'default', None ) in [ 'SAMPLES.db', ]:
-            self.is_contigs = False
-            self.is_samples = True
-            self.basename = 'SAMPLES'
-        #elif self.info_dict.get( 'METAVAR', None ) == 'CONTIGS-DB':
-        # print('is contigs', self.name, self.is_contigs)
-        #self.is_contigs = self.info_dict.get( 'default', None ) == 'CONTIGS.db'
-    def get_format( self ):
-        if self.is_samples:
-            return 'anvio_samples_db'
-        if self.is_contigs:
-            return "anvio_contigs_db"
-        return super( ParameterContigsDB, self ).get_format()
-    def to_cmd_line( self ):
-        if not ( self.is_contigs or self.is_samples ):
-            return super( ParameterContigsDB, self ).to_cmd_line()
-        if self.is_input:
-            return  "%s '${%s.extra_files_path}/%s.db'\n" % ( self.get_arg_text(), self.get_output_cmd_name(), self.basename )
-        else:
-            return  "%s '${%s.extra_files_path}/%s.db'\n" % ( self.get_arg_text(), self.get_output_cmd_name(), self.basename )
-    def get_pre_cmd_line( self ):
-        if not ( self.is_contigs or self.is_samples ):
-            return super( ParameterContigsDB, self ).get_pre_cmd_line()
-        text = ''
-        if self.is_input:
-            text = ''
-            cmd_text = "cp -R '${%s.extra_files_path}' '${%s.extra_files_path}'" % ( self.get_input_cmd_name(), self.get_output_cmd_name() )
-            if not self.required:
-                text = """
-    #if $%s:
-        %s
-    #else
-        echo ''
-    #end if""" % ( self.get_input_cmd_name(), cmd_text )
-            else:
-                text = cmd_text
-        else:
-            text = "mkdir '${%s.extra_files_path}'\n" % ( self.get_output_cmd_name() )
-        return text
 
-    def get_post_cmd_line( self ):
-        if not ( self.is_contigs or self.is_samples ):
-            return super( ParameterContigsDB, self ).get_post_cmd_line()
-        return ''
 
 class ParameterFASTA( ParameterFILE_PATH ):
     def get_format( self ):
@@ -516,42 +453,7 @@ class ParameterClassifierFile(ParameterFILE_PATH):
 class ParameterSVG(ParameterFILE_PATH):
     def get_format(self):
         return 'svg'
-
-class ParameterProfileDB( ParameterDB ):
-    def __init__( self, *args, **kwd ):
-        super( ParameterProfileDB, self ).__init__( *args, **kwd )
-        self.is_output = True
-        self.is_input = not self.name.startswith( self._output_startswith )
-        # print('is_input', self.name, self.is_input)
-        self.basename='PROFILE'
-    def get_format( self ):
-        return 'anvio_profile_db'
-    def to_cmd_line( self ):
-        if self.is_input:
-            return  "%s '${%s.extra_files_path}/%s.db'\n" % ( self.get_arg_text(), self.get_output_cmd_name(), self.basename )
-        else:
-            return  "%s '${%s.extra_files_path}/%s.db'\n" % ( self.get_arg_text(), self.get_output_cmd_name(), self.basename )
-    def get_pre_cmd_line( self ):
-        text = ''
-        if self.is_input:
-            text = ''
-            cmd_text = "cp -R '${%s.extra_files_path}' '${%s.extra_files_path}'" % ( self.get_input_cmd_name(), self.get_output_cmd_name() )
-            if not self.required:
-                text = """
-    #if $%s:
-        %s
-    #else
-        echo ''
-    #end if""" % ( self.get_input_cmd_name(), cmd_text )
-            else:
-                text = cmd_text
-        else:
-            text = "mkdir '${%s.extra_files_path}'\n" % ( self.get_output_cmd_name() )
-        return text
-
-    def get_post_cmd_line( self ):
-        return ''
-###
+    
 
 class ParameterPROFILE( ParameterFILE_PATH ):
     def get_format( self ):
@@ -690,70 +592,10 @@ class ParameterUnknownDB( ParameterFILE_PATH ):
 
 ###
 
-class ParameterGenomes( ParameterUnknownDB ):
-    def get_format( self ):
-        return "anvio_genomes_db"
-
-class ParameterUnknownRUNINFODB( ParameterUnknownDB ):
-    def get_base_filename(self, multiple=False):
-        return 'RUNINFO.cp'
-
-class ParameterStructureDB(ParameterUnknownDB):
-    def get_format( self ):
-        return "anvio_structure_db"
 
 
-class ParameterPANorPROFILEDB( ParameterUnknownDB ):
-    #add directory copying
-    def get_format( self ):
-        return "anvio_profile_db,anvio_pan_db"
 
 
-class ParameterPANDB( ParameterPANorPROFILEDB ):
-    def get_format( self ):
-        return "anvio_pan_db"
-
-class ParameterPANDBDIR( ParameterPANDB ):
-    def get_base_filename(self, multiple=False):
-        return ''
-
-
-class ParameterDIR_PATH( ParameterFILE_PATH ):
-    def get_format( self ):
-        return "anvio_composite"
-    def to_cmd_line( self ):
-        text = ''
-        if self.multiple:
-            cmd_text = """
-            #for $gxy_%s in $%s:
-                %s '${gxy_%s.extra_files_path}'
-            #end for
-            """ % ( self.name, self.name, self.get_arg_text(), self.name )
-        else:
-            cmd_text = "%s '${%s.extra_files_path}'" % ( self.get_arg_text(), self.name )
-        if not self.multiple:
-            text = """
-#if $%s:
-    %s
-#end if\n""" % ( self.name, cmd_text )
-        else:
-            text = cmd_text
-        return text
-
-class ParameterOutDIR_PATH(ParameterDIR_PATH):
-    def __init__( self, *args, **kwd ):
-        super( ParameterOutDIR_PATH, self ).__init__( *args, **kwd )
-        self.is_output = True
-        self.is_input = False
-
-
-class ParameterProfileDIR_PATH( ParameterDIR_PATH ):
-    def get_format( self ):
-        return "anvio_profile_db"
-
-class ParameterHMMProfileDIR_PATH( ParameterDIR_PATH ):
-    def get_format( self ):
-        return "anvio_hmm_profile"
 
 ###
 
@@ -848,58 +690,7 @@ class ParameterPFAM_DATA_DIR_PATH( ParameterINOUTCOMPOSITE_DATA_DIR_PATH ):
 #        return ''
 
 ####
-
-
-
 ###
-
-class ParameterRUNINFO_FILE( ParameterDIR_PATH ):
-    def to_cmd_line( self ):
-        text = ''
-        if self.multiple:
-            cmd_text = """
-            #for $gxy_%s in $%s:
-                %s '${gxy_%s.extra_files_path}/RUNINFO.cp'
-            #end for
-            """ % ( self.name, self.name, self.get_arg_text(), self.name )
-        else:
-            cmd_text = "%s '${%s.extra_files_path}/RUNINFO.cp'" % ( self.get_arg_text(), self.name )
-        if not self.multiple:
-            text = """
-#if $%s:
-    %s
-#end if\n""" % ( self.name, cmd_text )
-        else:
-            text = cmd_text
-        return text
-
-class ParamterFILENAME_PREFIX( ParameterDIR_PATH ):
-    def get_format( self ):
-        return "anvio_composite"
-    def to_cmd_line( self ):
-        text = ''
-        cmd_txt =  "%s '%s'" % ( self.get_arg_text(), self.name )
-        if not self.required:
-            text = """
-#if $str( $%s ):
-    %s
-#end if\n""" % ( self.name, cmd_txt )
-        else:
-            text = "%s\n" % cmd_txt
-        return text
-    def get_pre_cmd_line( self ):
-        return 'mkdir ${%s.extra_files_path}' % ( self.name )
-    def get_post_cmd_line( self ):
-        ##if compgen -G "%s*"
-        return '''( cp %s* '${%s.extra_files_path}/' || echo '' )''' % ( self.name, self.name )
-        return '''
-        if [stat -t "%s*" >/dev/null 2>&1] ;
-        then
-            cp "%s*" '${%s.extra_files_path}/' ;
-        else
-            echo ''
-        fi
-        ''' % ( self.name, self.name, self.name )
 
 class ParameterFILES( ParameterFILE_PATH ):
     def get_format( self ):
@@ -1047,9 +838,6 @@ class ParameterListOrFile( ParameterFILE_PATH ):
 DEFAULT_PARAMETER = Parameter
 
 PARAMETER_BY_METAVAR = {
-    'PROFILE_DB': ParameterProfileDB,#ParameterPROFILE,#ParameterDB,
-    'PAN_DB': ParameterPANDB, #ParameterDB,
-    'PAN_OR_PROFILE_DB': ParameterPANorPROFILEDB,#ParameterDB,
     'DB': ParameterUnknownDB,
     'INT': ParameterINT,
     'INTEGER': ParameterINT,
@@ -1060,13 +848,10 @@ PARAMETER_BY_METAVAR = {
     'LEEWAY_NTs': ParameterINT,
     'WRAP': ParameterINT,
     'NUM_SAMPLES': ParameterINT,
-    #'DIR_PATH': ParameterDIR_PATH,
-    'DIR_PATH': ParameterProfileDIR_PATH, #should this be profile, or generic anvio, probably generic anvio
+    #'DIR_PATH': ParameterDIR_PATH,#should this be profile, or generic anvio, probably generic anvio
     'PERCENT_IDENTITY': ParameterFLOAT,
     'GENE_CALLER_ID': ParameterINT,
     'SMTP_CONFIG_INI': ParameterFILE_PATH,
-    'USERS_DATA_DIR': ParameterDIR_PATH,
-    'CONTIGS_DB': ParameterContigsDB,#ParameterDB,
     'FILE_NAME': ParameterFILE_PATH,
     'PROFILE': ParameterPROFILE,
     'SAMPLES-ORDER': ParameterTABULAR,
@@ -1077,44 +862,33 @@ PARAMETER_BY_METAVAR = {
     'RUNINFO_PATH': ParameterFILE_PATH,
     'ADDITIONAL_LAYERS': ParameterTABULAR,
     'VIEW_DATA': ParameterTABULAR,
-    'GENOMES_STORAGE': ParameterGenomes,
     'BINS_INFO': ParameterTABULAR,
     'PATH': ParameterFILE_PATH, #ParameterDIR_PATH, #used in matrix-to-newick
     'NUM_POSITIONS': ParameterINT,
     'CONTIGS_AND_POS': ParameterTABULAR,
     'GENE-CALLS': ParameterTABULAR,
     'ADDITIONAL_VIEW': ParameterTABULAR,
-    'DB_FILE_PATH': ParameterContigsDB,#ParameterDB,#fixme should not be contigs, is structure also, should be generic
-    'SAMPLES_DB': ParameterContigsDB,#ParameterDB,
     'NUM_CPUS': ParameterNUM_CPUS,
-    'FILENAME_PREFIX': ParamterFILENAME_PREFIX,
     'RATIO': ParameterFLOAT,
     'TAB DELIMITED FILE': ParameterTABULAR,
     'INPUT_BAM': ParameterINPUT_BAM,
     'INPUT_BAM(S)': ParameterINPUT_BAMS,
-    'RUNINFO_FILE': ParameterRUNINFO_FILE,
     'FILE(S)': ParameterFILES,
     'SINGLE_PROFILE(S)': ParameterPROFILE,
     'TEXT_FILE': ParameterTABULAR,
-
-    'HMM PROFILE PATH': ParameterHMMProfileDIR_PATH,
     'NUM_THREADS': ParameterNUM_CPUS,
     'VARIABILITY_TABLE': ParameterVARIABILITY_TABLE,
     'VARIABILITY_PROFILE': ParameterVARIABILITY_TABLE,
     'STATE_FILE': ParameterSTATE_FILE,
     'DATABASE': ParameterUnknownDB,
-    'STRUCTURE_DB': ParameterStructureDB,
     'BAM_FILE': ParameterINPUT_BAM,
     'REPORT_FILE_PATH': ParameterREPORT_FILE_PATH,
     'FLAT_FILE': ParameterFILE_PATH,
     'STATE': ParameterSTATE_FILE,
     'BINS_DATA': ParameterTABULAR,
-    'SUMMARY_DICT': ParameterUnknownRUNINFODB,
     'LINKMER_REPORT': ParameterFILE_PATH, #should we add datatype? well output from anvi-report-linkmers is not datatyped due to generic metavar, so can't really
     'DB PATH': ParameterUnknownDB,
     'BAM FILE[S]': ParameterINPUT_BAMS,
-    'PAN_DB_DIR': ParameterPANDBDIR,
-    'DIRECTORY': ParameterDIR_PATH,
     'FASTA FILE': ParameterFASTA,
     'REPORT FILE': ParameterREPORT_FILE_PATH,
     'GENBANK': ParameterGENBANK,
@@ -1130,9 +904,6 @@ PARAMETER_BY_METAVAR = {
     'CONFIG_FILE': ParameterFILE_PATH,
     'FASTA_FILE': ParameterFASTA,
     'FASTQ_FILES': ParameterFASTQ,
-    'CONTIG DATABASE(S)': ParameterContigsDB,
-
-
     'IP_ADDR': ParameterDiscard,
     'DATABASE_PATH': ParameterUnknownDB,
 }
@@ -1142,9 +913,7 @@ PARAMETER_BY_NAME = {
     'pfam-data-dir': ParameterPFAM_DATA_DIR_PATH,
     'just-do-it': ParameterBooleanAlwaysTrue,
     'temporary-dir-path': ParameterDiscard,
-    'dump-dir': ParameterOutDIR_PATH,
     'full-report': ParameterREPORT_FILE_PATH,
-    'port-number': ParameterPortDefault, #TODO: read default, or set to something always? always set and then use in realtimetool
     'browser-path': ParameterDiscard,
     'server-only': ParameterBooleanAlwaysTrue,
     'password-protected': ParameterDiscard,
@@ -1188,13 +957,13 @@ def get_parameter( param_name, arg_short, arg_long, info_dict ):
         param = ParameterBoolean
     else:
         metavar = info_dict.get( 'metavar' )
-        # print("metavar is dan: %s, %s, %s" % ( param_name, metavar, info_dict ) )
+        print("metavar is dan: %s, %s, %s" % ( param_name, metavar, info_dict ) )
         if metavar is None:
-            pass
-            # print("metavar is None: %s, %s" % ( param_name, metavar ) )
+           # pass
+            print("metavar is None: %s, %s" % ( param_name, metavar ) )
         elif metavar not in PARAMETER_BY_METAVAR:
-            pass
-            #print("metavar not defined for: %s, %s" % ( param_name, metavar ) )
+           # pass
+            print("metavar not defined for: %s, %s" % ( param_name, metavar ) )
         param = PARAMETER_BY_METAVAR.get( metavar, DEFAULT_PARAMETER )
     return param( param_name, arg_short, arg_long, info_dict )
 
@@ -1208,11 +977,11 @@ class FakeArg( argparse_original.ArgumentParser ):
         super( FakeArg, self ).__init__( *args, **kwd )
 
     def add_argument( self, *args, **kwd ):
-        print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-        print('add argument')
-        print('args', args)
-        print('kwd', kwd)
-        print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+        # print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+        # print('add argument')
+        # print('args', args)
+        # print('kwd', kwd)
+        # print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
         self._blankenberg_args.append( ( args, kwd ) )
         super( FakeArg, self ).add_argument( *args, **kwd )
 

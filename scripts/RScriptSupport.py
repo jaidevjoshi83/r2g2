@@ -1,5 +1,6 @@
 import json
 import os 
+import rpy2.robjects.packages as rpackages
 
 
 def edit_r_script(r_script_path, edited_r_script_path, fakearg_path=None, json_file_name="out.json"):
@@ -24,7 +25,19 @@ def edit_r_script(r_script_path, edited_r_script_path, fakearg_path=None, json_f
     with open(edited_r_script_path,  'w' ) as fh:
         fh.write(new_input)
 
+def return_dependencies(r_script_path):
+    print(r_script_path)
+    packages = {}
+    with open(r_script_path,  'r' ) as fh:
+        input = fh.read()
+        for i in input.split('\n'):
+            if "library(" in i:
+                package_name = i.split('(')[1].strip(')')
+                package_importr = rpackages.importr( package_name)
+                packages[package_name] =  package_importr.__version__
+    return packages
 
+                
 def json_to_python(json_file):
     # print(json_file)
     with open(json_file) as testread:
