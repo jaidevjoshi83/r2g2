@@ -38,12 +38,7 @@ def main(r_script, out_dir):
     profile = '3.10'
     filename = r_script.split('/')[len(r_script.split('/'))-1]
 
-    print("########")
-
     Reformated_command = blankenberg_parameters.blankenberg_to_cmd_line(params, filename).replace(filename, "Rscript '$__tool_directory__/%s'"%(filename))
-
-
-    print("########")
 
     template_dict = {
         'id': filename.replace( '-', '_'),
@@ -81,7 +76,7 @@ def main(r_script, out_dir):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-r', '--r_file_name', required=True, help="Provide path of a R file... ")
+    parser.add_argument('-r', '--r_script_name', required=True, help="Provide the path of an R script... ")
     parser.add_argument('-o', '--output_dir', required=False, default='out')
     args = parser.parse_args()
     main(args.r_file_name, args.output_dir)
