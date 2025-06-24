@@ -8,9 +8,9 @@ from r_script_to_galaxy_wrapper import *
 from dependency_generator import  return_galax_tag
 
 def main(r_script, out_dir):
-    # dependency_tag = "\n".join([return_galax_tag(i[0], i[1]) for i in return_dependencies(r_script)])
+    dependency_tag = "\n".join([return_galax_tag(i[0], i[1]) for i in return_dependencies(r_script)])
    
-    dependency_tag = ''
+    # dependency_tag = ''
     # print("14", dependency_tag)
     current_dir = os.getcwd()
     temp_dir = tempfile.mkdtemp(dir=current_dir)
@@ -36,18 +36,14 @@ def main(r_script, out_dir):
     DEFAULT_TOOL_TYPE = "test_tools"
     tool_type = DEFAULT_TOOL_TYPE
     profile = '3.10'
-    filename = 'test-file'
-    # test_print =  blankenberg_parameters.blankenberg_to_cmd_line(params, filename)
+    filename = r_script.split('/')[len(r_script.split('/'))-1]
 
-    repeat_args = []
-    # for b in blankenberg_parameters._blankenberg_args:
-    #     if 'nargs' in b[1].keys():
-    #         print("###########################")
-    #         print(b[0], b[1]['nargs'])
-    #         repeat_args.append(b)
-    #         print("###########################")
-    print('50', blankenberg_parameters.blankenberg_get_params({})[0])
-    print('52',repeat_args)
+    print("########")
+
+    Reformated_command = blankenberg_parameters.blankenberg_to_cmd_line(params, filename).replace(filename, "Rscript '$__tool_directory__/%s'"%(filename))
+
+
+    print("########")
 
     template_dict = {
         'id': filename.replace( '-', '_'),
@@ -59,19 +55,21 @@ def main(r_script, out_dir):
         #'macros': None,
         'version_command': '%s --version' % filename,
         'requirements': dependency_tag,
-        'command': blankenberg_parameters.blankenberg_to_cmd_line(params, filename),
+        #'command': blankenberg_parameters.blankenberg_to_cmd_line(params, filename),
+        'command': Reformated_command, 
         'inputs': blankenberg_parameters.blankenberg_to_inputs(params),
         'outputs': blankenberg_parameters.blankenberg_to_outputs(params),
         #'tests': None,
         #'tests': { output:'' },
         'help': format_help(blankenberg_parameters.format_help().replace( os.path.basename(__file__), filename)),
-        'doi': [''],
-        'bibtex_citations': [galaxy_tool_citation]
+        # 'doi': [''],
+        # 'bibtex_citations': [galaxy_tool_citation]
+        'bibtex_citations': ''
         }
 
     tool_xml = Template(TOOL_TEMPLATE).render( **template_dict )
 
-    with open( os.path.join ('./test_out', "%s.xml" % filename ), 'w') as out:
+    with open( os.path.join ('./', out_dir, "%s.xml" % filename ), 'w') as out:
         out.write(tool_xml)
 
     if os.path.exists(temp_dir) and os.path.isdir(temp_dir):

@@ -48,9 +48,9 @@ TOOL_TEMPLATE = """<tool id="{{id}}" name="{{name}}" version="{{version}}" >
     <version_command>{{ version_command }}</version_command>
 {%- endif %}
 {%- endif %}
-    <command><![CDATA[
+    <command><![CDATA[ 
 {%- if command %}
-        {{ command }}
+          {{ command }}
 {%- else %}
         TODO: Fill in command template.
 {%- endif %}
@@ -282,7 +282,7 @@ class ParameterBoolean( Parameter ):
                 self.get_type(),  
                 self.get_label(),
                 self.arg_long,
-                self.get_default(), 
+                '"true"', 
                 self.get_optional(),
                 self.get_argument(), 
                 self.get_help(),
@@ -1070,7 +1070,8 @@ class FakeArg( argparse_original.ArgumentParser ):
 
 def format_help(help_text):
     # Just cheat and make it a huge block quote
-    rval = "::\n"
+    #rval = "::\n" #FixMe
+    rval = "\n"
     for line in help_text.split('\n'):
         rval = "%s\n  %s" % (rval, line.rstrip())
     return "%s\n\n" % (rval)
