@@ -11,8 +11,6 @@ from xml.sax.saxutils import quoteattr
 from jinja2 import Template
 import json
 
-
-
 #profile="19.01"
 TOOL_TEMPLATE = """<tool id="{{id}}" name="{{name}}" version="{{version}}" >
 {%- if description %}
@@ -220,7 +218,6 @@ class Parameter( object ):
                 self.get_optional(),
                 self.get_argument(), 
                 self.get_help(),
-
             )
     def to_xml_output( self ):
         return ''
@@ -293,7 +290,6 @@ class ParameterBoolean( Parameter ):
     
     def to_cmd_line( self ):
         return "${%s}\n" % ( self.name )
-
 
 class ParameterINT( Parameter ):
     def get_type(self):
@@ -399,6 +395,8 @@ class ParameterDB( ParameterFILE_PATH ):
             return "input_%s" % self.name
         else:
             return self.name
+        
+
     def get_pre_cmd_line( self ):
         text = ''
         if self.is_input:
@@ -421,9 +419,6 @@ class ParameterDB( ParameterFILE_PATH ):
         if not self.is_input:
             return "mv '%s.db' '${%s}'" % ( self.name, self.get_output_cmd_name()  )
         return ''
-
-
-
 
 class ParameterFASTA( ParameterFILE_PATH ):
     def get_format( self ):
@@ -449,7 +444,6 @@ class ParameterSVG(ParameterFILE_PATH):
     def get_format(self):
         return 'svg'
     
-
 class ParameterPROFILE( ParameterFILE_PATH ):
     def get_format( self ):
         return "anvio_profile_db"
@@ -515,7 +509,6 @@ class ParameterUnknownDB( ParameterFILE_PATH ):
             text = cmd_text
         return text
 
-##
     def get_pre_cmd_line( self ):
         text = ''
         if self.is_input:
@@ -584,14 +577,7 @@ class ParameterUnknownDB( ParameterFILE_PATH ):
         else:
             return ''
             #return super( ParameterUnknownDB, self ).get_structured_like()
-
 ###
-
-
-
-
-
-
 ###
 
 class ParameterINOUTCOMPOSITE_DATA_DIR_PATH( ParameterDB ):
@@ -941,10 +927,6 @@ SKIP_PARAMETER_NAMES = list(map( lambda x: x.replace( "-", '_' ), SKIP_PARAMETER
 
 def get_parameter( param_name, arg_short, arg_long, info_dict ):
 
-    # print("########################################################################")
-    # print( info_dict )
-    # print("########################################################################")
-
     if param_name in PARAMETER_BY_NAME:
         param = PARAMETER_BY_NAME[param_name]
     elif 'action' in info_dict and info_dict['action'] not in [ 'help', 'store' ]:
@@ -952,16 +934,16 @@ def get_parameter( param_name, arg_short, arg_long, info_dict ):
         param = ParameterBoolean
     else:
         metavar = info_dict.get( 'metavar' )
-        print("metavar is dan: %s, %s, %s" % ( param_name, metavar, info_dict ) )
+        #pass
+        #print("metavar is dan: %s, %s, %s" % ( param_name, metavar, info_dict ) )
         if metavar is None:
-           # pass
-            print("metavar is None: %s, %s" % ( param_name, metavar ) )
+           pass
+            # print("metavar is None: %s, %s" % ( param_name, metavar ) )
         elif metavar not in PARAMETER_BY_METAVAR:
-       
-            print("metavar not defined for: %s, %s" % ( param_name, metavar ) )
+            #print("metavar not defined for: %s, %s" % ( param_name, metavar ) )
+            pass
         param = PARAMETER_BY_METAVAR.get( metavar, DEFAULT_PARAMETER )
     return param( param_name, arg_short, arg_long, info_dict )
-
 
 class FakeArg( argparse_original.ArgumentParser ):
     def __init__( self, *args, **kwd ):
@@ -972,11 +954,6 @@ class FakeArg( argparse_original.ArgumentParser ):
         super( FakeArg, self ).__init__( *args, **kwd )
 
     def add_argument( self, *args, **kwd ):
-        # print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-        # print('add argument')
-        # print('args', args)
-        # print('kwd', kwd)
-        # print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
         self._blankenberg_args.append( ( args, kwd ) )
         super( FakeArg, self ).add_argument( *args, **kwd )
 
@@ -1043,10 +1020,7 @@ class FakeArg( argparse_original.ArgumentParser ):
             if param is None:
                 # print('no meta_var, using default', name, args[1])
                 #param = DEFAULT_PARAMETER( name, arg_short, arg_long, args[1] )
-                # print("##################### args 1326")
-                # print(args[1])
                 param = get_parameter( name, arg_short, arg_long, args[1] )
-                # print("##################### args 1326")
 
             #print 'before copy', param.name, type(param)
             param = param.copy( name=name, arg_short=arg_short, arg_long=arg_long, info_dict=args[1] )
@@ -1054,13 +1028,12 @@ class FakeArg( argparse_original.ArgumentParser ):
             rval.append(param)
         return rval
     def blankenberg_to_cmd_line( self, params, filename=None ):
+        # print("1042", params)
         pre_cmd = []
         post_cmd = []
         rval = filename or self.prog
 
-   
         for param in self.blankenberg_get_params( params ):
-            # print("#################>", param)
             if param.name not in SKIP_PARAMETER_NAMES:
                 pre = param.get_pre_cmd_line()
                 if pre:
@@ -1075,7 +1048,7 @@ class FakeArg( argparse_original.ArgumentParser ):
         post_cmd = "\n && \n".join( post_cmd )
         if pre_cmd:
             rval = "%s\n &&\n %s" % ( pre_cmd, rval )
-        rval = "%s\n&> '${GALAXY_ANVIO_LOG}'\n" % (rval)
+        rval = "%s\n" % (rval)
         if post_cmd:
             rval = "%s\n &&\n %s" % ( rval, post_cmd )
         return rval #+ "\n && \nls -lahR" #Debug with showing directory listing in stdout
@@ -1094,7 +1067,6 @@ class FakeArg( argparse_original.ArgumentParser ):
                 rval.append( param.to_xml_output() )
         # rval.append( GALAXY_ANVIO_LOG_XML )
         return rval
-
 
 def format_help(help_text):
     # Just cheat and make it a huge block quote
