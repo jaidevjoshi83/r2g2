@@ -1,0 +1,97 @@
+<tool id="subgroup.r" name="subgroup.r" version="0.1.0" >
+    <description>test</description>
+    <requirements>
+    <requirement type="package" version="1.0.1">r-argparse</requirement>
+<requirement type="package" version="2.2.1">r-ggplot2</requirement>
+    </requirements>
+    <stdio>
+        <exit_code range="1:" />
+    </stdio>
+    <version_command>subgroup.r --version</version_command>
+    <command><![CDATA[
+          Rscript '$__tool_directory__/subgroup.r'
+
+#if $str( $input_file ):
+    --input_file '${input_file}'
+#end if
+
+
+#if $str( $format ):
+    --format '${format}'
+#end if
+
+
+#if $str( $threads ):
+    --threads '${threads}'
+#end if
+
+${normalize}
+
+
+#if $str( $threshold ):
+    --threshold '${threshold}'
+#end if
+
+
+#if $str( $categories ):
+    --categories '${categories}'
+#end if
+
+
+#if $str( $output_file ):
+    --output_file '${output_file}'
+#end if
+
+${verbose}
+
+
+#if $str( $log_level ):
+    --log_level '${log_level}'
+#end if
+
+
+    ]]></command>
+    <inputs>
+        <param name="input_file" type="text" label="Input File" value="" optional="True" argument="--input_file" help="Path to input file"/>
+        <param name="format" type="text" label="Format" value="csv" optional="True" argument="--format" help="Format of input file (default: csv)"/>
+        <param name="threads" type="text" label="Threads" value="4" optional="True" argument="--threads" help="Number of threads to use (default: 4)"/>
+        <param name="normalize" type="boolean" label="Normalize" truevalue="--normalize" falsevalue="" checked="true" optional="True" argument="--normalize" help="Enable data normalization"/>
+        <param name="threshold" type="text" label="Threshold" value="0.5" optional="True" argument="--threshold" help="Threshold value for filtering (default: 0.5)"/>
+        <param name="categories" type="text" label="Categories" value="" optional="True" argument="--categories" help="A list of category names (e.g., A B C)"/>
+        <param name="verbose" type="boolean" label="Verbose" truevalue="--verbose" falsevalue="" checked="true" optional="True" argument="--verbose" help="Enable verbose mode"/>
+        <param name="log_level" type="text" label="Log Level" value="INFO" optional="True" argument="--log_level" help="Set logging level (default: INFO)"/>
+    </inputs>
+    <outputs>
+        
+    </outputs>
+    <help><![CDATA[
+
+
+  usage: subgroup.r [-h] [--input_file INPUT_FILE] [--format {csv,tsv,json}] [--threads THREADS] [--normalize]
+                             [--threshold THRESHOLD] [--categories CATEGORIES [CATEGORIES ...]]
+                             [--output_file OUTPUT_FILE] [--verbose] [--log_level {DEBUG,INFO,WARNING,ERROR}]
+  
+  test
+  
+  optional arguments:
+    -h, --help            show this help message and exit
+    --input_file INPUT_FILE
+                          Path to input file
+    --format {csv,tsv,json}
+                          Format of input file (default: csv)
+    --threads THREADS     Number of threads to use (default: 4)
+    --normalize           Enable data normalization
+    --threshold THRESHOLD
+                          Threshold value for filtering (default: 0.5)
+    --categories CATEGORIES [CATEGORIES ...]
+                          A list of category names (e.g., A B C)
+    --output_file OUTPUT_FILE
+                          Path to output file
+    --verbose             Enable verbose mode
+    --log_level {DEBUG,INFO,WARNING,ERROR}
+                          Set logging level (default: INFO)
+  
+
+
+    ]]></help>
+</tool>
