@@ -6,7 +6,6 @@
 import argparse
 import os
 import string
-
 import rpy2.robjects.packages as rpackages
 from rpy2 import robjects
 from rpy2.robjects.functions import DocumentedSTFunction
@@ -19,7 +18,6 @@ package_name = None
 package_version = None
 r_name = None
 galaxy_tool_version = None
-
 
 tool_xml ='''<tool id="%(id)s" name="%(name)s" version="@VERSION@-%(galaxy_tool_version)s">
     <description><![CDATA[%(description)s]]></description>
@@ -310,10 +308,6 @@ saveRDS(input_abundance, file = "${output_r_dataset}", ascii = FALSE, version = 
 SAFE_CHARS = list( x for x in string.ascii_letters + string.digits + '_' )
 def simplify_text( text ):
     return ''.join( [ x if x in SAFE_CHARS else '_' for x in text ] )
-    
-
-
-
 
 def to_docstring( page, section_names = None):
     """ section_names: list of section names to consider. If None
@@ -321,7 +315,6 @@ def to_docstring( page, section_names = None):
 
     Returns a string that can be used as a Python docstring. """
     
-
     if section_names is None:
         section_names = list(page.sections.keys())
         
@@ -351,7 +344,6 @@ def to_docstring( page, section_names = None):
         rval.append(os.linesep)
     return ''.join(rval).strip()
 
-
 def unroll_vector_to_text( section ):
         
     def walk( s, tree, depth=0):
@@ -365,8 +357,6 @@ def unroll_vector_to_text( section ):
     rval = []
     walk(rval, section, depth=1)
     return ''.join(rval).strip()
-
-
 
 robjects.r('''
 
@@ -441,8 +431,6 @@ for j, name in enumerate( dir( package_importr ) ):
                     }
         xml_dict['id_underscore'] = simplify_text( xml_dict['id'] )
         xml_dict['id'] = simplify_text( xml_dict['id'] ) # ToolShed doesn't like e.g. '-'' in ids
-        
-
         help = pages( rname )
         try:
             join_char = ""
@@ -524,8 +512,6 @@ for j, name in enumerate( dir( package_importr ) ):
             except Exception as e:
                 print('Error getting input param info:')
                 print(e)
-            
-            
             
             if input_type == 'dataset':
                 input_template = optional_input_dataset
@@ -672,7 +658,6 @@ for j, name in enumerate( dir( package_importr ) ):
                         xml_dict['rscript_content'] = '%s${___USE_COMMA___}\n#set $___USE_COMMA___ = ","\n%s = ${ %s_type.%s }' % ( xml_dict['rscript_content'], inp_name, input_placeholder, input_placeholder )
                     xml_dict['rscript_content'] = '%s\n#end if\n' % ( xml_dict['rscript_content'] )
         xml_dict['rscript_content'] = '%s\n)%s' % ( xml_dict['rscript_content'], SAVE_R_OBJECT_TEXT )
-        
         
         assert rname not in package_dict, "%s already exists!" % (package_dict)
         package_dict[rname] = xml_dict
