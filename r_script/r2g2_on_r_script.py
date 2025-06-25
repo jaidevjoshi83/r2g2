@@ -7,11 +7,11 @@ import shutil
 from r_script_to_galaxy_wrapper import *
 from dependency_generator import  return_galax_tag
 
-def main(r_script, out_dir):
+def main(r_script, out_dir, profile):
 
-    # dependency_tag = "\n".join([return_galax_tag(i[0], i[1]) for i in return_dependencies(r_script)])
-   
-    dependency_tag = ''
+    dependency_tag = "\n".join([return_galax_tag(i[0], i[1]) for i in return_dependencies(r_script)])
+
+    # dependency_tag = ''
     current_dir = os.getcwd()
     temp_dir = tempfile.mkdtemp(dir=current_dir)
 
@@ -36,15 +36,14 @@ def main(r_script, out_dir):
 
     DEFAULT_TOOL_TYPE = "test_tools"
     tool_type = DEFAULT_TOOL_TYPE
-    profile = '3.10'
+    # profile = '3.10'
     filename = r_script.split('/')[len(r_script.split('/'))-1]
     Reformated_command = blankenberg_parameters.blankenberg_to_cmd_line(params, filename).replace(filename, "Rscript '$__tool_directory__/%s'"%(filename))
-
     template_dict = {
-        'id': filename.replace( '-', '_'),
+        'id': filename.replace( '-', '_').strip('.r'),
         'tool_type': tool_type,
         'profile': profile,
-        'name': filename,
+        'name': filename.replace( '-', '_').strip('.r'),
         'version': '0.1.0',
         'description': blankenberg_parameters.description,
         #'macros': None,
@@ -78,5 +77,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-r', '--r_script_name', required=True, help="Provide the path of an R script... ")
     parser.add_argument('-o', '--output_dir', required=False, default='out')
+    parser.add_argument('-p', '--profile', required=False, default="22.01")
+
     args = parser.parse_args()
-    main(args.r_script_name, args.output_dir)
+    main(args.r_script_name, args.output_dir, args.profile)

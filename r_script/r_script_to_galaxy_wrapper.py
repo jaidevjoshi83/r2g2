@@ -1072,9 +1072,14 @@ class FakeArg( argparse_original.ArgumentParser ):
         rval = []
         for param in self.blankenberg_get_params( params ):
             if param.name not in SKIP_PARAMETER_NAMES and param.is_output:
-                rval.append( param.to_xml_output() )
+                if param.to_xml_output() != '':
+                    rval.append( param.to_xml_output() )
         # rval.append( GALAXY_ANVIO_LOG_XML )
+        if len(rval) == 0:
+            rval.append("<data name='output'  format='tabular' label='${tool.name} on $on_string (tabular)' from_work_dir='out.tsv'/>")
         return rval
+    
+    
 
 def format_help(help_text):
     # Just cheat and make it a huge block quote
