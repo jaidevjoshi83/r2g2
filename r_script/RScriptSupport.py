@@ -2,6 +2,20 @@ import json
 import os 
 import rpy2.robjects.packages as rpackages
 
+def clean_r_script(lines):
+    new_lines = []
+
+    for i, line in enumerate(lines):
+        if "parse_args()" in line:
+            new_lines.append(line)
+            break  
+        else:
+            new_lines.append(line)
+  
+    new_string = '\n'.join(new_lines)
+    
+    return new_string
+
 
 def edit_r_script(r_script_path, edited_r_script_path, fakearg_path=None, json_file_name="out.json"):
     
@@ -11,8 +25,10 @@ def edit_r_script(r_script_path, edited_r_script_path, fakearg_path=None, json_f
     with open(r_script_path,  'r' ) as fh:
         input = fh.read()
 
+    cleaned_lines = clean_r_script(input.split('\n'))    
+
     new_input = """source("%s")\ntool_params = function (){\n"""%(fakearg_path) 
-    new_input += input.replace('ArgumentParser', "FakeArgumentParser")
+    new_input += cleaned_lines.replace('ArgumentParser', "FakeArgumentParser")
 
     lines_to_append = """
         write_json(args_list, path = "%s", pretty = TRUE, auto_unbox = TRUE)
@@ -38,38 +54,26 @@ def return_dependencies(r_script_path):
                 packages['version'] =  package_importr.__version__
                 package_list.append((package_name, package_importr.__version__))
     return package_list
-   
-def json_to_python(json_file):
-    # print(json_file)
+
+
+def clean_json(json_file):
     with open(json_file) as testread:
         data = json.loads(testread.read())
+    cleaned_json = []
+    for d in data:
+        if "add_argument" in d and "add_argument_group" not in d:
+            cleaned_json.append('parser.add_argument'+d.split(".add_argument")[1])
+    return cleaned_json
+   
+def json_to_python(json_file):
 
-    parser_name = 'parser'
-    arg_groups = []
-    inp_list = []
-    mutually_ex_groups = []
+    data = clean_json(json_file)
+    parser_name = 'parser'     
+    args_string = '\n    '.join(data)
 
-    for line in data:
-        if 'add_argument_group' in line:
-            group_name = line.strip().split()[0]
-            arg_groups.append( group_name )
-            #print 'added group', group_name    
-        elif "add_mutually_exclusive_group" in line:
-            mutually_ex_name = line.strip().split()[0]
-            mutually_ex_groups.append(mutually_ex_name)
-        else:
-            for group_name in arg_groups:
-                if group_name in line:
-                    line = line.replace( group_name, parser_name )
-                    inp_list.append(line)
-            
-
-        args_string = '\n    '.join(inp_list)
-
-        arg_str_function = f"""
+    arg_str_function = f"""
 #!/usr/bin/env python
 from r_script_to_galaxy_wrapper import FakeArg
-
 
 def r_script_argument_parsing(parent_locals, FakeArg=FakeArg):
     __description__ = "test"

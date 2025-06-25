@@ -622,8 +622,6 @@ class ParameterPFAM_DATA_DIR_PATH( ParameterINOUTCOMPOSITE_DATA_DIR_PATH ):
     def get_format( self ):
         return "anvio_pfam_profile"
 
-
-
 '''
     def to_cmd_line( self ):
         text = ''
@@ -966,6 +964,7 @@ class FakeArg( argparse_original.ArgumentParser ):
 
     def blankenberg_params_by_name( self, params ):
         rval = {}#odict()
+        print(self._blankenberg_args)
         for args in self._blankenberg_args:
             name = ''
             for arg in args[0]:
@@ -983,6 +982,7 @@ class FakeArg( argparse_original.ArgumentParser ):
         return rval
     
     def blankenberg_get_params( self, params ):
+        # print(self._blankenberg_args)
         rval = []
         # print('blankenberg_get_params params', params)
         for args in self._blankenberg_args:
@@ -1033,8 +1033,13 @@ class FakeArg( argparse_original.ArgumentParser ):
         post_cmd = []
         rval = filename or self.prog
 
+        # print("1034, ##########")
+        # print(self.blankenberg_get_params({}))
+        # print("1036, ##########")
+
         for param in self.blankenberg_get_params( params ):
             if param.name not in SKIP_PARAMETER_NAMES:
+              
                 pre = param.get_pre_cmd_line()
                 if pre:
                     pre_cmd.append( pre )
@@ -1053,6 +1058,9 @@ class FakeArg( argparse_original.ArgumentParser ):
             rval = "%s\n &&\n %s" % ( rval, post_cmd )
         return rval #+ "\n && \nls -lahR" #Debug with showing directory listing in stdout
     def blankenberg_to_inputs( self, params ):
+        # print("@@@@@@@@@")
+        # print(self.blankenberg_get_params( params ))
+        # print('@@@@@@@@@@@@')
         rval = []
         for param in self.blankenberg_get_params( params ):
             if param.name not in SKIP_PARAMETER_NAMES and param.is_input:

@@ -8,18 +8,18 @@ from r_script_to_galaxy_wrapper import *
 from dependency_generator import  return_galax_tag
 
 def main(r_script, out_dir):
-    dependency_tag = "\n".join([return_galax_tag(i[0], i[1]) for i in return_dependencies(r_script)])
+
+    # dependency_tag = "\n".join([return_galax_tag(i[0], i[1]) for i in return_dependencies(r_script)])
    
-    # dependency_tag = ''
-    # print("14", dependency_tag)
+    dependency_tag = ''
     current_dir = os.getcwd()
     temp_dir = tempfile.mkdtemp(dir=current_dir)
 
     if not os.path.exists(os.path.join(current_dir, out_dir)):
         os.makedirs(os.path.join(current_dir, out_dir))
+
     edited_r_script  = os.path.join(temp_dir, "%s_edited.r"%(r_script.split('/')[len(r_script.split('/'))-1].split('.')[0])) 
-    json_out  = os.path.join(temp_dir, "%s.json"%(r_script.split('/')[len(r_script.split('/'))-1].split('.')[0])) 
-    
+    json_out  = os.path.join(temp_dir, "%s.json"%(r_script.split('/')[len(r_script.split('/'))-1].split('.')[0]))      
     edit_r_script(r_script, edited_r_script, json_file_name=json_out )
     subprocess.run(['Rscript',  edited_r_script])
     python_code_as_string = json_to_python(json_out)
@@ -31,13 +31,13 @@ def main(r_script, out_dir):
     local_dict = {}
 
     exec(input, globals(), local_dict)
+
     blankenberg_parameters = local_dict.get('blankenberg_parameters')
 
     DEFAULT_TOOL_TYPE = "test_tools"
     tool_type = DEFAULT_TOOL_TYPE
     profile = '3.10'
     filename = r_script.split('/')[len(r_script.split('/'))-1]
-
     Reformated_command = blankenberg_parameters.blankenberg_to_cmd_line(params, filename).replace(filename, "Rscript '$__tool_directory__/%s'"%(filename))
 
     template_dict = {
@@ -79,4 +79,4 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--r_script_name', required=True, help="Provide the path of an R script... ")
     parser.add_argument('-o', '--output_dir', required=False, default='out')
     args = parser.parse_args()
-    main(args.r_file_name, args.output_dir)
+    main(args.r_script_name, args.output_dir)
