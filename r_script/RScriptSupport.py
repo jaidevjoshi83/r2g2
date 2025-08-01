@@ -47,7 +47,7 @@ def return_dependencies(r_script_path):
     with open(r_script_path,  'r' ) as fh:
         input = fh.read()
         for i in input.split('\n'):
-            if "library(" in i:
+            if "library(" in i and "argparse" not in i:
                 package_name = i.split('(')[1].strip(')')
                 package_importr = rpackages.importr( package_name)
                 packages['name'] =  package_name

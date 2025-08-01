@@ -65,3 +65,36 @@ def unroll_vector_to_text(section):
     rval = []
     walk(rval, section, depth=1)
     return ''.join(rval).strip()
+
+# Mapping of R internal type codes to their string names
+SEXPTYPE_MAP = {
+    0: "NILSXP",      # NULL
+    1: "SYMSXP",      # Symbols
+    2: "LISTSXP",     # Pairlists
+    3: "CLOSXP",      # Closures (functions)
+    4: "ENVSXP",      # Environments
+    5: "PROMSXP",     # Promises
+    6: "LANGSXP",     # Language constructs
+    7: "SPECIALSXP",  # Special functions
+    8: "BUILTINSXP",  # Built-in functions
+    9: "CHARSXP",     # Single characters
+    10: "LGLSXP",     # Logical vectors
+    13: "INTSXP",     # Integer vectors
+    14: "REALSXP",    # Numeric vectors
+    15: "CPLXSXP",    # Complex vectors
+    16: "STRSXP",     # Character vectors
+    17: "DOTSXP",     # ...
+    18: "ANYSXP",     # Any object
+    19: "VECSXP",     # Lists
+    20: "EXPRSXP",    # Expressions
+    21: "BCODESXP",   # Byte code
+    22: "EXTPTRSXP",  # External pointer
+    23: "WEAKREFSXP", # Weak reference
+    24: "RAWSXP",     # Raw bytes
+    25: "S4SXP",      # S4 object
+    30: "FUNSXP",     # Any function
+}
+
+# Replacement for str_typeint
+def str_typeint(type_code: int) -> str:
+    return SEXPTYPE_MAP.get(type_code, f"UNKNOWN_TYPE({type_code})")

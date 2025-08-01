@@ -19,7 +19,8 @@ import rpy2.robjects.packages as rpackages
 from rpy2 import robjects
 from rpy2.robjects.help import pages
 from xml.sax.saxutils import quoteattr
-from rpy2.rinterface import str_typeint
+# from rpy2.rinterface import str_typeint
+from utils import str_typeint
 
 def main():
     parser = argparse.ArgumentParser()
