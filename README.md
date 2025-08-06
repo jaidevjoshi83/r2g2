@@ -1,5 +1,14 @@
 # R2-G2 Automatically Generates Galaxy tools on a per-function basis from any R Library
 
+```
+#requirements: 
+
+python=3.12
+R=4.4.3
+rpy2==3.6.1
+
+
+```
 
 ```
 $ ./bin/r2g2_on_package.py --help
@@ -34,3 +43,4 @@ optional arguments:
                         Provide the path of an R script...
   -o OUTPUT_DIR, --output_dir OUTPUT_DIR
 ```
+
