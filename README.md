@@ -1,13 +1,10 @@
 # R2-G2 Automatically Generates Galaxy tools on a per-function basis from any R Library
 
+# requirements: 
 ```
-#requirements: 
-
 python=3.12
 R=4.4.3
 rpy2==3.6.1
-
-
 ```
 
 ```
