@@ -19,10 +19,17 @@ def main(r_script, out_dir, profile):
         os.makedirs(os.path.join(current_dir, out_dir))
 
     edited_r_script  = os.path.join(temp_dir, "%s_edited.r"%(r_script.split('/')[len(r_script.split('/'))-1].split('.')[0])) 
-    json_out  = os.path.join(temp_dir, "%s.json"%(r_script.split('/')[len(r_script.split('/'))-1].split('.')[0]))      
+    
+    print("R script with argument parsing edited and processed successfully...")
+    json_out  = os.path.join(temp_dir, "%s.json"%(r_script.split('/')[len(r_script.split('/'))-1].split('.')[0]))  
+    print("Extracted arguments have been written to a JSON file successfully...")  
+   
     edit_r_script(r_script, edited_r_script, json_file_name=json_out )
     subprocess.run(['Rscript',  edited_r_script])
+
     python_code_as_string = json_to_python(json_out)
+
+    print("Converted R arguments to Python argparse successfully...")
     input = python_code_as_string
     params = {}
     __provides__ = [] # Reset provides since it is not always declared
@@ -33,6 +40,7 @@ def main(r_script, out_dir, profile):
     exec(input, globals(), local_dict)
 
     blankenberg_parameters = local_dict.get('blankenberg_parameters')
+    print("Tool parameters have been extracted successfully...")
 
     DEFAULT_TOOL_TYPE = "test_tools"
     tool_type = DEFAULT_TOOL_TYPE
@@ -49,7 +57,7 @@ def main(r_script, out_dir, profile):
         #'macros': None,
         'version_command': '%s --version' % filename,
         'requirements': dependency_tag,
-        #'command': blankenberg_parameters.blankenberg_to_cmd_line(params, filename),
+        # 'command': blankenberg_parameters.blankenberg_to_cmd_line(params, filename),
         'command': Reformated_command, 
         'inputs': blankenberg_parameters.blankenberg_to_inputs(params),
         'outputs': blankenberg_parameters.blankenberg_to_outputs(params),
@@ -78,6 +86,7 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--r_script_name', required=True, help="Provide the path of an R script... ")
     parser.add_argument('-o', '--output_dir', required=False, default='out')
     parser.add_argument('-p', '--profile', required=False, default="22.01")
+    parser.add_argument('-d', '--description', required=False, default="tool based on R script")
 
     args = parser.parse_args()
     main(args.r_script_name, args.output_dir, args.profile)

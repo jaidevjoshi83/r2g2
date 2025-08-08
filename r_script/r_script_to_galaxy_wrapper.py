@@ -12,7 +12,7 @@ from jinja2 import Template
 import json
 
 #profile="19.01"
-TOOL_TEMPLATE = """<tool id="{{id}}" name="{{name}}" version="{{version}}" >
+TOOL_TEMPLATE = """<tool id="{{id}}" name="{{name}}" version="{{version}}" profile="{{profile}}" >
 {%- if description %}
     <description>{{ description }}</description>
 {%- endif %}
@@ -184,8 +184,6 @@ class Parameter( object ):
         arg = self.arg_long or self.arg_short or ''
         return arg
     def get_help( self, extra=None ):
-        #print(self.info_dict)
-        #print(self.info_dict.get('help', ''))
         help = self.info_dict.get('help', '')
         #if 'default' not in self.info_dict and '%(default)' in help:
         #    print('MISSING DEFAULT!')
@@ -377,7 +375,6 @@ class ParameterDB( ParameterFILE_PATH ):
         super( ParameterDB, self ).__init__( *args, **kwd )
         self.is_output = True
         self.is_input = not self.name.startswith( self._output_startswith )
-        # print('is_input', self.name, self.is_input)
     def get_format( self ):
         return "anvio_db"
     def to_cmd_line( self ):
@@ -472,7 +469,6 @@ class ParameterUnknownDB( ParameterFILE_PATH ):
         super( ParameterUnknownDB, self ).__init__( *args, **kwd )
         self.is_output = True
         self.is_input = not self.name.startswith( self._output_startswith )
-        #print('is_input', self.name, self.is_input)
         #self.basename='PROFILE'
     def get_format( self ):
         return "anvio_db"
@@ -945,9 +941,6 @@ def get_parameter( param_name, arg_short, arg_long, info_dict ):
 
 class FakeArg( argparse_original.ArgumentParser ):
     def __init__( self, *args, **kwd ):
-        # print('init')
-        # print('args', args)
-        # print('kwd', kwd)
         self._blankenberg_args = []
         super( FakeArg, self ).__init__( *args, **kwd )
 
@@ -964,7 +957,7 @@ class FakeArg( argparse_original.ArgumentParser ):
 
     def blankenberg_params_by_name( self, params ):
         rval = {}#odict()
-        print(self._blankenberg_args)
+        # print(self._blankenberg_args)
         for args in self._blankenberg_args:
             name = ''
             for arg in args[0]:
@@ -982,9 +975,7 @@ class FakeArg( argparse_original.ArgumentParser ):
         return rval
     
     def blankenberg_get_params( self, params ):
-        # print(self._blankenberg_args)
         rval = []
-        # print('blankenberg_get_params params', params)
         for args in self._blankenberg_args:
             name = ''
             arg_short = ''
@@ -1001,8 +992,8 @@ class FakeArg( argparse_original.ArgumentParser ):
                     name = arg
             param = None
             if name in params:
-                #print("%s (name) is in params" % (name) )
-                pass
+                print("%s (name) is in params" % (name) )
+                # pass
                 param = params[name]
             #if 'metavar' in args[1]:
                 #if args[1]['metavar'] in params:
@@ -1028,14 +1019,10 @@ class FakeArg( argparse_original.ArgumentParser ):
             rval.append(param)
         return rval
     def blankenberg_to_cmd_line( self, params, filename=None ):
-        # print("1042", params)
+
         pre_cmd = []
         post_cmd = []
         rval = filename or self.prog
-
-        # print("1034, ##########")
-        # print(self.blankenberg_get_params({}))
-        # print("1036, ##########")
 
         for param in self.blankenberg_get_params( params ):
             if param.name not in SKIP_PARAMETER_NAMES:
@@ -1058,9 +1045,6 @@ class FakeArg( argparse_original.ArgumentParser ):
             rval = "%s\n &&\n %s" % ( rval, post_cmd )
         return rval #+ "\n && \nls -lahR" #Debug with showing directory listing in stdout
     def blankenberg_to_inputs( self, params ):
-        # print("@@@@@@@@@")
-        # print(self.blankenberg_get_params( params ))
-        # print('@@@@@@@@@@@@')
         rval = []
         for param in self.blankenberg_get_params( params ):
             if param.name not in SKIP_PARAMETER_NAMES and param.is_input:
