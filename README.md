@@ -1,8 +1,15 @@
-### requirements: 
+ ### Installation Instructions and Requirements
+ 
 ```
-python=3.12
+conda create  -n r2g2 conda-forge::rpy2=3.6.2 
+conda activate r2g2
+conda install r-r6=2.6.1 r-argparse=2.2.5
+pip install request packaging
+
+
+python=3.13
 R=4.4.3
-rpy2==3.6.1
+
 ```
 
 
