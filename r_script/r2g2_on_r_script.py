@@ -74,11 +74,11 @@ def main(r_script, out_dir, profile):
     with open( os.path.join ('./', out_dir, "%s.xml" % filename ), 'w') as out:
         out.write(tool_xml)
 
-    if os.path.exists(temp_dir) and os.path.isdir(temp_dir):
-        shutil.rmtree(temp_dir)
-        print(f"Deleted directory: {temp_dir}")
-    else:
-        print(f"Directory does not exist: {temp_dir}")
+    # if os.path.exists(temp_dir) and os.path.isdir(temp_dir):
+    #     shutil.rmtree(temp_dir)
+    #     print(f"Deleted directory: {temp_dir}")
+    # else:
+    #     print(f"Directory does not exist: {temp_dir}")
 
 if __name__ == '__main__':
 
