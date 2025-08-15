@@ -27,6 +27,7 @@ def edit_r_script(r_script_path, edited_r_script_path, fakearg_path=None, json_f
 
     cleaned_lines = clean_r_script(input.split('\n'))    
 
+
     new_input = """source("%s")\ntool_params = function (){\n"""%(fakearg_path) 
     new_input += cleaned_lines.replace('ArgumentParser', "FakeArgumentParser")
 

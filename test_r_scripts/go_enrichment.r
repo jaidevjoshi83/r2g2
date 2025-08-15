@@ -1,13 +1,13 @@
 #!/usr/bin/env Rscript
 
 # Load libraries
-suppressPackageStartupMessages({
-  library(argparse)
-  library(clusterProfiler)
-  library(org.Hs.eg.db)
-  library(ggplot2)
-  library(enrichplot)
-})
+# suppressPackageStartupMessages({
+#   library(argparse)
+#   library(clusterProfiler)
+#   library(org.Hs.eg.db)
+#   library(ggplot2)
+#   library(enrichplot)
+# })
 
 # Argument parser
 parser <- ArgumentParser(description='GO Biological Process Enrichment Analysis')

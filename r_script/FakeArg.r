@@ -13,13 +13,13 @@ FakeArgs <- R6Class("FakeArgs",
       self$my_list <- list()  # Initialize the list
       private$name <- name
     },
-      parse_args = function() {
+    parse_args = function() {
           print("argument parsed")
         },
     add_argument = function(...) {
       arg_str <- sprintf(
         "%s.add_argument(%s)",
-        "parser",
+        private$name,
         argparse:::convert_..._to_arguments("add_argument", ...)
       )
       # Append to list (use length+1 for next index)
@@ -50,6 +50,26 @@ FakeArgs <- R6Class("FakeArgs",
             FakeGroup$new(self$my_list, group_name)
             # Group$new(private$python_code, group_name)
         },
+
+    add_subparsers = function(...) {
+
+            subparsers_name <- paste0(private$name, "_subparsers")
+            print("########################")
+            print( subparsers_name )
+
+            arg_str <- sprintf("%s = %s.add_subparsers(%s)",
+                            subparsers_name, private$name,
+                            argparse:::convert_..._to_arguments("add_argument", ...))
+
+            args_list[[length(args_list) + 1]] <<- arg_str
+
+            # private$python_code$append(sprintf("%s = %s.add_subparsers(%s)",
+            #                 subparsers_name, private$name,
+            #                 argparse:::convert_..._to_arguments("add_argument", ...)))
+            print(self$my_list)
+            FakeSubparsers$new(self$my_list, subparsers_name)
+        },
+
 
     add_item = function(name, value) {
       self$my_list[[name]] <- value
@@ -82,11 +102,38 @@ FakeGroup <- R6Class("FakeGroup", # nolint
         add_argument = function(...) {
             arg_str <- sprintf("%s.add_argument(%s)",
                 private$name, argparse:::convert_..._to_arguments("add_argument", ...))
+
              private$python_code_list[[length(private$python_code_list) + 1]] <- arg_str
              args_list[[length(args_list) + 1]] <<- arg_str
         }
     ),
     private = list(python_code_list = NULL, name = NULL)
+)
+
+FakeSubparsers <- R6Class("FakeSubparsers", # nolint
+    public = list(
+        initialize = function(python_code_list, name) {
+            private$python_code_list <- python_code_list
+            private$name <- name
+        },
+        add_parser = function(...) {
+            parser_name <- paste0(private$name, "_subparser", private$n_subparsers)
+
+            private$n_subparsers <- private$n_subparsers + 1
+
+            arg_str = sprintf("%s = %s.add_parser(%s)",
+                            parser_name, private$name,
+                            argparse:::convert_..._to_arguments("ArgumentParser", ...))
+            print(arg_str)
+
+            private$python_code_list[[length(private$python_code_list) + 1]] <- arg_str
+
+            args_list[[length(args_list) + 1]] <<- arg_str
+
+            FakeArgs$new(name=parser_name)
+        }
+    ),
+    private = list(python_code_list = NULL, name = NULL, n_subparsers = 0)
 )
 
 
