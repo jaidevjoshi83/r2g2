@@ -1,5 +1,5 @@
 import argparse
-from RScriptSupport import edit_r_script, json_to_python, return_dependencies
+from RScriptSupport import edit_r_script, json_to_python, return_dependencies, json_to_python_for_param_info, extract_simple_parser_info
 import subprocess
 import tempfile
 import os
@@ -20,16 +20,36 @@ def main(r_script, out_dir, profile):
 
     edited_r_script  = os.path.join(temp_dir, "%s_edited.r"%(r_script.split('/')[len(r_script.split('/'))-1].split('.')[0])) 
     
+    print("####################################################################")
     print("R script with argument parsing edited and processed successfully...")
+    print("####################################################################")
+
     json_out  = os.path.join(temp_dir, "%s.json"%(r_script.split('/')[len(r_script.split('/'))-1].split('.')[0]))  
+
+    print("####################################################################")
     print("Extracted arguments have been written to a JSON file successfully...")  
+    print("####################################################################")
    
     edit_r_script(r_script, edited_r_script, json_file_name=json_out )
     subprocess.run(['Rscript',  edited_r_script])
 
     python_code_as_string = json_to_python(json_out)
 
+    param_info_dict = {}
+    argument_string = json_to_python_for_param_info(json_out)
+    exec(argument_string, globals(), param_info_dict)
+
+    param_info = param_info_dict.get('param_info')
+
+    param_cat = extract_simple_parser_info(param_info)
+
+    print(param_cat['subparsers'])
+    print(param_cat['mutually_exclusive_groups'])
+    
+    print("####################################################################")
     print("Converted R arguments to Python argparse successfully...")
+    print("####################################################################")
+
     input = python_code_as_string
     params = {}
     __provides__ = [] # Reset provides since it is not always declared
@@ -40,7 +60,10 @@ def main(r_script, out_dir, profile):
     exec(input, globals(), local_dict)
 
     blankenberg_parameters = local_dict.get('blankenberg_parameters')
+
+    print("####################################################################")
     print("Tool parameters have been extracted successfully...")
+    print("####################################################################")
 
     DEFAULT_TOOL_TYPE = "test_tools"
     tool_type = DEFAULT_TOOL_TYPE
@@ -76,7 +99,7 @@ def main(r_script, out_dir, profile):
 
     # if os.path.exists(temp_dir) and os.path.isdir(temp_dir):
     #     shutil.rmtree(temp_dir)
-    #     print(f"Deleted directory: {temp_dir}")
+    #     # print(f"Deleted directory: {temp_dir}")
     # else:
     #     print(f"Directory does not exist: {temp_dir}")
 

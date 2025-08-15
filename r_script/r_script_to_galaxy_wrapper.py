@@ -1064,7 +1064,6 @@ class FakeArg( argparse_original.ArgumentParser ):
         return rval
     
     
-
 def format_help(help_text):
     # Just cheat and make it a huge block quote
     #rval = "::\n" #FixMe

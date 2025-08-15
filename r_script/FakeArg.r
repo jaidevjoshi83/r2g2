@@ -54,22 +54,13 @@ FakeArgs <- R6Class("FakeArgs",
     add_subparsers = function(...) {
 
             subparsers_name <- paste0(private$name, "_subparsers")
-            print("########################")
-            print( subparsers_name )
-
             arg_str <- sprintf("%s = %s.add_subparsers(%s)",
                             subparsers_name, private$name,
                             argparse:::convert_..._to_arguments("add_argument", ...))
 
             args_list[[length(args_list) + 1]] <<- arg_str
-
-            # private$python_code$append(sprintf("%s = %s.add_subparsers(%s)",
-            #                 subparsers_name, private$name,
-            #                 argparse:::convert_..._to_arguments("add_argument", ...)))
-            print(self$my_list)
             FakeSubparsers$new(self$my_list, subparsers_name)
         },
-
 
     add_item = function(name, value) {
       self$my_list[[name]] <- value
@@ -83,7 +74,7 @@ FakeArgs <- R6Class("FakeArgs",
       print(self$my_list)
     }
   ),
-    private = list( python_code_list=NULL, name = NULL, n_mutually_exclusive_groups = 0, n_groups = 0)             
+    private = list( python_code_list=NULL, name = NULL, n_mutually_exclusive_groups = 0, n_groups = 0)
 )
 
 FakeArgumentParser = function (description=NULL) {
@@ -102,7 +93,6 @@ FakeGroup <- R6Class("FakeGroup", # nolint
         add_argument = function(...) {
             arg_str <- sprintf("%s.add_argument(%s)",
                 private$name, argparse:::convert_..._to_arguments("add_argument", ...))
-
              private$python_code_list[[length(private$python_code_list) + 1]] <- arg_str
              args_list[[length(args_list) + 1]] <<- arg_str
         }
@@ -118,18 +108,13 @@ FakeSubparsers <- R6Class("FakeSubparsers", # nolint
         },
         add_parser = function(...) {
             parser_name <- paste0(private$name, "_subparser", private$n_subparsers)
-
             private$n_subparsers <- private$n_subparsers + 1
 
             arg_str = sprintf("%s = %s.add_parser(%s)",
                             parser_name, private$name,
                             argparse:::convert_..._to_arguments("ArgumentParser", ...))
-            print(arg_str)
-
             private$python_code_list[[length(private$python_code_list) + 1]] <- arg_str
-
             args_list[[length(args_list) + 1]] <<- arg_str
-
             FakeArgs$new(name=parser_name)
         }
     ),
