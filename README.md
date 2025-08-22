@@ -1,31 +1,51 @@
-# Overview 
-
-This program generates Galaxy tool wrappers for the Anvi'o platform.
-
-# License
-
-This program is released as open source software under the terms of [MIT License](https://raw.githubusercontent.com/blankenberglab/tool-generator-anvio/master/LICENSE).
-
-# Installing and using
-
-Create and a conda environment containing anvio and jinja2
-conda create -n anvio-galaxy anvio jinja2 -y && conda activate anvio-galaxy
-
-Make a version matching git clone of anvio and change into the directory
-git clone https://github.com/merenlab/anvio.git && cd anvio
-
-Make a galaxy directory, and enter it.
-mkdir galaxy && cd galaxy
-
-Download the Galaxy tool generator script and run it
-wget 'https://raw.githubusercontent.com/blankenberglab/tool-generator-anvio/master/tool-generator-anvio.py'
-python tool-generator-anvio.py
+ ### Installation Instructions and Requirements
+ 
+```
+conda create  -n r2g2 conda-forge::rpy2=3.6.2 
+conda activate r2g2
+conda install r-r6=2.6.1 r-argparse=2.2.5
+pip install request packaging
 
 
+python=3.13
+R=4.4.3
+
+```
 
 
-# Bug reporting and feature requests
+# R2-G2 Automatically Generates Galaxy tools on a per-function basis from any R Library
 
-Please submit bug reports and feature requests to the issue tracker on GitHub:
+```
+$ ./bin/r2g2_on_package.py --help
+usage: r2g2_on_package.py [-h] --name NAME [--package_name PACKAGE_NAME]
+                          [--package_version PACKAGE_VERSION] [--out OUT]
+                          [--create_load_matrix_tool]
+                          [--galaxy_tool_version GALAXY_TOOL_VERSION]
 
-[tool-generator-plink issue tracker](https://github.com/blankenberglab/tool-generator-anvio/issues)
+optional arguments:
+  -h, --help            show this help message and exit
+  --name NAME           Package Name
+  --package_name PACKAGE_NAME
+                        [Conda] Package Name
+  --package_version PACKAGE_VERSION
+                        [Conda] Package Version
+  --out OUT             Output directory
+  --create_load_matrix_tool
+                        Output a tool that will create an RDS from a tabular
+                        matrix
+  --galaxy_tool_version GALAXY_TOOL_VERSION
+                        Additional Galaxy Tool Version
+```
+
+# R2-G2 Automatically Generates Galaxy tools on R-Script based on argument parsing
+
+```
+usage: r_script/r2g2_on_r_script.py [-h] -r R_FILE_NAME [-o OUTPUT_DIR]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -r R_SCRIPT_NAME, --r_script_name R_SCRIPT_NAME
+                        Provide the path of an R script...
+  -o OUTPUT_DIR, --output_dir OUTPUT_DIR
+```
+
