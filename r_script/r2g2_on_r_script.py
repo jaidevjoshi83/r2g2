@@ -1,16 +1,4 @@
 import argparse
-from RScriptSupport import (
-    edit_r_script,
-    json_to_python,
-    return_dependencies,
-    json_to_python_for_param_info,
-    extract_simple_parser_info,
-    # generate_conditional_block,
-    generate_command_section_subpro,
-    generate_mutual_group_conditionals,
-    generate_mutual_group_command,
-)
-
 import subprocess
 import tempfile
 import os
@@ -18,6 +6,14 @@ import shutil
 from r_script_to_galaxy_wrapper import *
 from dependency_generator import  return_galax_tag
 import xml.etree.ElementTree as ET
+from RScriptSupport import (
+    edit_r_script,
+    json_to_python,
+    return_dependencies,
+    json_to_python_for_param_info,
+    extract_simple_parser_info,
+)
+
 
 def main(r_script, out_dir, profile):
     dependency_tag = "\n".join([return_galax_tag(i[0], i[1]) for i in return_dependencies(r_script)])
@@ -46,7 +42,6 @@ def main(r_script, out_dir, profile):
     subprocess.run(['Rscript',  edited_r_script])
 
     python_code_as_string = json_to_python(json_out)
-
     param_info_dict = {}
     argument_string = json_to_python_for_param_info(json_out)
 
@@ -70,7 +65,7 @@ def main(r_script, out_dir, profile):
     exec(input, globals(), local_dict)
 
     blankenberg_parameters = local_dict.get('blankenberg_parameters')
-
+    blankenberg_parameters.param_cat = extract_simple_parser_info(param_info)
 
     print("####################################################################")
     print("Tool parameters have been extracted successfully...")
@@ -84,18 +79,15 @@ def main(r_script, out_dir, profile):
     Reformated_command = blankenberg_parameters.oynaxraoret_to_cmd_line(params, filename).replace(filename, "Rscript '$__tool_directory__/%s'"%(filename))
 
     inputs = [
-        blankenberg_parameters.generate_conditional_block(param_cat['subparsers'], {}),
-        blankenberg_parameters.generate_mutual_group_conditionals(param_cat['mutually_exclusive_groups'], {}),
-        blankenberg_parameters.generate_misc_params( param_cat['subparsers'], param_cat['mutually_exclusive_groups'], {}),
+        blankenberg_parameters.generate_conditional_block( {}),
+        blankenberg_parameters.generate_mutual_group_conditionals( {}),
+        blankenberg_parameters.generate_misc_params( {}),
     ]
 
     command_str = [
-        blankenberg_parameters.generate_command_section_subpro(param_cat['subparsers'], {}),
-        blankenberg_parameters.generate_mutual_group_command(param_cat['mutually_exclusive_groups'], {})
+        blankenberg_parameters.generate_command_section_subpro( {}),
+        blankenberg_parameters.generate_mutual_group_command( {})
     ]
-
-    print()
-
 
     template_dict = {
         'id': filename.replace( '-', '_').strip('.r'),

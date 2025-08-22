@@ -8,12 +8,17 @@ from anvio import FakeArg, SKIP_PARAMETER_NAMES
 
 class CustomFakeArg(FakeArg):
     def __init__(self, *args, **kwargs):
+
+        self.param_cat = {}
         # call parent constructor
         super().__init__(*args, **kwargs)
     
-    def generate_conditional_block(self,  sub_process, params):
+    def generate_conditional_block(self,  params):
         """Generate Galaxy XML <conditional> block based on param definitions and subprocess mapping."""
         # Build lookup: argument -> XML snippet
+
+        sub_process = self.param_cat['subparsers']
+
         param_lookup = {}
         for d in self.oynaxraoret_get_params( params ):
             if d.name not in SKIP_PARAMETER_NAMES and d.is_input:
@@ -40,8 +45,11 @@ class CustomFakeArg(FakeArg):
         xml_lines.append('</conditional>')
         return "\n".join(xml_lines)
     
-    def generate_mutual_group_conditionals(self,  mut_groups, params):
+    def generate_mutual_group_conditionals(self,   params):
         """Generate <conditional> blocks for each mutual exclusion group."""
+       
+        mut_groups = self.param_cat['mutually_exclusive_groups']
+
         # Build lookup: argument -> full <param> snippet
         param_lookup = {}
         for d in self.oynaxraoret_get_params( params ):
@@ -73,11 +81,15 @@ class CustomFakeArg(FakeArg):
 
         return "\n".join(xml_lines)
     
-    def generate_misc_params(self, sub_process, mut_groups, params):
+    def generate_misc_params(self, params):
         """
         Generate <param> blocks for arguments that are NOT in sub_process or mutual groups.
         Returns a joined string of <param> XML snippets.
         """
+
+        sub_process = self.param_cat['subparsers']
+        mut_groups = self.param_cat['mutually_exclusive_groups']
+
         # Flatten all arguments from sub_process
         sub_args = set(arg for args in sub_process.values() for arg in args)
         # Flatten all arguments from mutual groups
@@ -95,7 +107,7 @@ class CustomFakeArg(FakeArg):
 
         return "\n".join(misc_lines)
     
-    def generate_command_section_subpro(self,  sub_process, params):
+    def generate_command_section_subpro(self, params):
         """Generate Galaxy XML <command> block matching the conditional subprocess options."""
         # Build lookup: argument -> name
 
@@ -105,6 +117,8 @@ class CustomFakeArg(FakeArg):
         #     name = param.attrib.get('name')
         #     if arg and name:
         #         param_lookup[arg] = name
+
+        sub_process = self.param_cat['subparsers']
 
         param_lookup = {}
 
@@ -134,9 +148,11 @@ class CustomFakeArg(FakeArg):
         cmd_lines.append('    #end if')
         return "\n".join(cmd_lines)
     
-    def generate_mutual_group_command(self, mut_groups, params):
+    def generate_mutual_group_command(self, params):
         """Generate <command> block for mutually exclusive argument groups."""
         # Build lookup: argument -> param name
+
+        mut_groups = self.param_cat['mutually_exclusive_groups']
         param_lookup = {}
         for d in self.oynaxraoret_get_params( params ):
             if d.name not in SKIP_PARAMETER_NAMES and d.is_input:
@@ -268,12 +284,22 @@ def json_to_python(json_file):
 #!/usr/bin/env python
 # from r_script_to_galaxy_wrapper import FakeArg
 from RScriptSupport import CustomFakeArg
+import json
+import argparse
+
+# def param_info_parsing(parent_locals):
+#     parser_1 = argparse.ArgumentParser()\n   
+#     globals().update(parent_locals)
+#     return parser_1
 
 def r_script_argument_parsing(parent_locals, CustomFakeArg=CustomFakeArg):
     __description__ = "test"
     
     parser = CustomFakeArg(description=__description__)\n    %s
     globals().update(parent_locals)
+
+    param_info  =  param_info_parsing(dict(locals()))
+    # parser.param_cat = extract_simple_parser_info(param_info)
 
     return parser
 
