@@ -85,8 +85,10 @@ def main(r_script, out_dir, profile):
     ]
 
     command_str = [
+        "Rscript '$__tool_directory__/%s'\n"%(filename),
         blankenberg_parameters.generate_command_section_subpro( {}),
-        blankenberg_parameters.generate_mutual_group_command( {})
+        blankenberg_parameters.generate_mutual_group_command( {}),
+        blankenberg_parameters.generate_misc_cmd({})
     ]
 
     template_dict = {

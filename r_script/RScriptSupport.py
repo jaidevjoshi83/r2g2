@@ -43,7 +43,7 @@ class CustomFakeArg(FakeArg):
             xml_lines.append('  </when>')
 
         xml_lines.append('</conditional>')
-        return "\n".join(xml_lines)
+        return "    \n".join(xml_lines)
     
     def generate_mutual_group_conditionals(self,   params):
         """Generate <conditional> blocks for each mutual exclusion group."""
@@ -79,7 +79,7 @@ class CustomFakeArg(FakeArg):
 
             xml_lines.append('</conditional>')
 
-        return "\n".join(xml_lines)
+        return "\n\t".join(xml_lines)
     
     def generate_misc_params(self, params):
         """
@@ -105,7 +105,7 @@ class CustomFakeArg(FakeArg):
                 if arg and arg not in grouped_args:
                     misc_lines.append(d.to_xml_param())
 
-        return "\n".join(misc_lines)
+        return "\n\t".join(misc_lines)
     
     def generate_command_section_subpro(self, params):
         """Generate Galaxy XML <command> block matching the conditional subprocess options."""
@@ -146,7 +146,7 @@ class CustomFakeArg(FakeArg):
                     cmd_lines.append(f'        {arg} "${{sub_process.missing_param_for_{safe_name}}}"')
 
         cmd_lines.append('    #end if')
-        return "\n".join(cmd_lines)
+        return "\n\t".join(cmd_lines)
     
     def generate_mutual_group_command(self, params):
         """Generate <command> block for mutually exclusive argument groups."""
@@ -180,7 +180,34 @@ class CustomFakeArg(FakeArg):
                     cmd_lines.append(f'        {arg} "${{{group_name}.missing_param_for_{safe_option}}}"')
 
             cmd_lines.append('    #end if')
-        return "\n".join(cmd_lines)
+        return "\n\t".join(cmd_lines)
+    
+    def generate_misc_cmd(self, params):
+        """
+        Generate <param> blocks for arguments that are NOT in sub_process or mutual groups.
+        Returns a joined string of <param> XML snippets.
+        """
+        sub_process = self.param_cat['subparsers']
+        mut_groups = self.param_cat['mutually_exclusive_groups']
+
+        # Flatten all arguments from sub_process
+        sub_args = set(arg for args in sub_process.values() for arg in args)
+        # Flatten all arguments from mutual groups
+        mut_args = set(arg for args in mut_groups.values() for arg in args)
+        # All grouped arguments
+        grouped_args = sub_args.union(mut_args)
+
+        misc_lines = []
+
+        for d in self.oynaxraoret_get_params( params ):
+            if d.name not in SKIP_PARAMETER_NAMES and d.is_input:
+                arg = d.name
+                if arg and arg not in grouped_args:
+                    misc_lines.append(d.to_cmd_line())
+                    
+        return "\n\t".join(misc_lines)
+
+        
 
 
 def clean_r_script(lines):
