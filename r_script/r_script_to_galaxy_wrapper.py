@@ -393,7 +393,6 @@ class ParameterDB( ParameterFILE_PATH ):
         else:
             return self.name
         
-
     def get_pre_cmd_line( self ):
         text = ''
         if self.is_input:
@@ -976,6 +975,10 @@ class FakeArg( argparse_original.ArgumentParser ):
     
     def blankenberg_get_params( self, params ):
         rval = []
+
+        # for i in self._blankenberg_args:
+        #     print(i)
+
         for args in self._blankenberg_args:
             name = ''
             arg_short = ''
@@ -1012,14 +1015,13 @@ class FakeArg( argparse_original.ArgumentParser ):
                 # print('no meta_var, using default', name, args[1])
                 #param = DEFAULT_PARAMETER( name, arg_short, arg_long, args[1] )
                 param = get_parameter( name, arg_short, arg_long, args[1] )
-
             #print 'before copy', param.name, type(param)
             param = param.copy( name=name, arg_short=arg_short, arg_long=arg_long, info_dict=args[1] )
             #print 'after copy', type(param)
             rval.append(param)
         return rval
+    
     def blankenberg_to_cmd_line( self, params, filename=None ):
-
         pre_cmd = []
         post_cmd = []
         rval = filename or self.prog
@@ -1044,14 +1046,21 @@ class FakeArg( argparse_original.ArgumentParser ):
         if post_cmd:
             rval = "%s\n &&\n %s" % ( rval, post_cmd )
         return rval #+ "\n && \nls -lahR" #Debug with showing directory listing in stdout
+    
     def blankenberg_to_inputs( self, params ):
         rval = []
+        # print(self.blankenberg_get_params( params ))
         for param in self.blankenberg_get_params( params ):
+            # print(param)
             if param.name not in SKIP_PARAMETER_NAMES and param.is_input:
+                # print(param.name)
                 inp_xml = param.to_xml_param()
+                # print(inp_xml)
                 if inp_xml:
                     rval.append( inp_xml )
+        # print("1061", rval)
         return rval
+    
     def blankenberg_to_outputs( self, params ):
         rval = []
         for param in self.blankenberg_get_params( params ):
@@ -1062,7 +1071,6 @@ class FakeArg( argparse_original.ArgumentParser ):
         if len(rval) == 0:
             rval.append("<data name='output'  format='tabular' label='${tool.name} on $on_string (tabular)' from_work_dir='out.tsv'/>")
         return rval
-    
     
 def format_help(help_text):
     # Just cheat and make it a huge block quote

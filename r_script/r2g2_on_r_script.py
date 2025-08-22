@@ -1,14 +1,25 @@
 import argparse
-from RScriptSupport import edit_r_script, json_to_python, return_dependencies, json_to_python_for_param_info, extract_simple_parser_info
+from RScriptSupport import (
+    edit_r_script,
+    json_to_python,
+    return_dependencies,
+    json_to_python_for_param_info,
+    extract_simple_parser_info,
+    # generate_conditional_block,
+    generate_command_section_subpro,
+    generate_mutual_group_conditionals,
+    generate_mutual_group_command,
+)
+
 import subprocess
 import tempfile
 import os
 import shutil
 from r_script_to_galaxy_wrapper import *
 from dependency_generator import  return_galax_tag
+import xml.etree.ElementTree as ET
 
 def main(r_script, out_dir, profile):
-
     dependency_tag = "\n".join([return_galax_tag(i[0], i[1]) for i in return_dependencies(r_script)])
 
     # dependency_tag = ''
@@ -17,6 +28,7 @@ def main(r_script, out_dir, profile):
 
     if not os.path.exists(os.path.join(current_dir, out_dir)):
         os.makedirs(os.path.join(current_dir, out_dir))
+        
 
     edited_r_script  = os.path.join(temp_dir, "%s_edited.r"%(r_script.split('/')[len(r_script.split('/'))-1].split('.')[0])) 
     
@@ -37,15 +49,13 @@ def main(r_script, out_dir, profile):
 
     param_info_dict = {}
     argument_string = json_to_python_for_param_info(json_out)
+
     exec(argument_string, globals(), param_info_dict)
 
     param_info = param_info_dict.get('param_info')
-
     param_cat = extract_simple_parser_info(param_info)
 
-    print(param_cat['subparsers'])
-    print(param_cat['mutually_exclusive_groups'])
-    
+
     print("####################################################################")
     print("Converted R arguments to Python argparse successfully...")
     print("####################################################################")
@@ -61,6 +71,7 @@ def main(r_script, out_dir, profile):
 
     blankenberg_parameters = local_dict.get('blankenberg_parameters')
 
+
     print("####################################################################")
     print("Tool parameters have been extracted successfully...")
     print("####################################################################")
@@ -69,7 +80,23 @@ def main(r_script, out_dir, profile):
     tool_type = DEFAULT_TOOL_TYPE
     # profile = '3.10'
     filename = r_script.split('/')[len(r_script.split('/'))-1]
-    Reformated_command = blankenberg_parameters.blankenberg_to_cmd_line(params, filename).replace(filename, "Rscript '$__tool_directory__/%s'"%(filename))
+
+    Reformated_command = blankenberg_parameters.oynaxraoret_to_cmd_line(params, filename).replace(filename, "Rscript '$__tool_directory__/%s'"%(filename))
+
+    inputs = [
+        blankenberg_parameters.generate_conditional_block(param_cat['subparsers'], {}),
+        blankenberg_parameters.generate_mutual_group_conditionals(param_cat['mutually_exclusive_groups'], {}),
+        blankenberg_parameters.generate_misc_params( param_cat['subparsers'], param_cat['mutually_exclusive_groups'], {}),
+    ]
+
+    command_str = [
+        blankenberg_parameters.generate_command_section_subpro(param_cat['subparsers'], {}),
+        blankenberg_parameters.generate_mutual_group_command(param_cat['mutually_exclusive_groups'], {})
+    ]
+
+    print()
+
+
     template_dict = {
         'id': filename.replace( '-', '_').strip('.r'),
         'tool_type': tool_type,
@@ -80,13 +107,13 @@ def main(r_script, out_dir, profile):
         #'macros': None,
         'version_command': '%s --version' % filename,
         'requirements': dependency_tag,
-        # 'command': blankenberg_parameters.blankenberg_to_cmd_line(params, filename),
-        'command': Reformated_command, 
-        'inputs': blankenberg_parameters.blankenberg_to_inputs(params),
-        'outputs': blankenberg_parameters.blankenberg_to_outputs(params),
+        # 'command': commands,
+        'command': "\n\n".join(command_str), 
+        'inputs': inputs,
+        'outputs': blankenberg_parameters.oynaxraoret_to_outputs(params),
         #'tests': None,
         #'tests': { output:'' },
-        'help': format_help(blankenberg_parameters.format_help().replace( os.path.basename(__file__), filename)),
+        'help': format_help(blankenberg_parameters.format_help().replace(os.path.basename(__file__), filename)),
         # 'doi': [''],
         # 'bibtex_citations': [galaxy_tool_citation]
         'bibtex_citations': ''
@@ -112,4 +139,5 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--description', required=False, default="tool based on R script")
 
     args = parser.parse_args()
+
     main(args.r_script_name, args.output_dir, args.profile)
