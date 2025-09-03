@@ -17,29 +17,31 @@ def find_closest_version(available_versions, target_version):
             return v
     return versions[0] if versions else None
 
-def generate_galaxy_dependency_tag(package_name, channel, version_str):
+def generate_galaxy_dependency_tag(package_name, version_str):
     return f'<requirement type="package" version="{version_str}">{package_name}</requirement>'
 
-def return_galax_tag(package_name, package_version):
+def return_galax_tag(package_name, package_version, dep_info=False):
     r_package = package_name
     target_version = package_version
 
     prefixes = ["bioconductor-", "r-"]
     channels = ["bioconda", "conda-forge"]
 
-    for prefix in prefixes:
-        conda_package = f"{prefix}{r_package.lower()}"
-        for channel in channels:
-            result = check_package(channel, conda_package)
-            if result:
-                available_versions = [f['version'] for f in result['files']]
-                closest_version = find_closest_version(available_versions, target_version)
-                if closest_version:
-                    dep_tag = generate_galaxy_dependency_tag(conda_package, channel, closest_version)
-                    print(dep_tag)
-                    return dep_tag
-        
-
+    if dep_info:
+        print('HELLO')
+        for prefix in prefixes:
+                conda_package = f"{prefix}{r_package.lower()}"
+                for channel in channels:
+                    result = check_package(channel, conda_package)
+                    if result:
+                        available_versions = [f['version'] for f in result['files']]
+                        closest_version = find_closest_version(available_versions, target_version)
+                        if closest_version:
+                            dep_tag = generate_galaxy_dependency_tag(conda_package, closest_version)
+                            return dep_tag
+    else:
+        return generate_galaxy_dependency_tag(package_name, package_version)
+            
     # if neither prefix finds anything in any channel
     raise ValueError(f"No conda package found for {r_package} in bioconda/conda-forge under 'bioconductor-' or 'r-' prefixes.")
 

@@ -14,18 +14,14 @@ from RScriptSupport import (
     extract_simple_parser_info,
 )
 
-
-def main(r_script, out_dir, profile):
-    dependency_tag = "\n".join([return_galax_tag(i[0], i[1]) for i in return_dependencies(r_script)])
-
-    # dependency_tag = ''
+def main(r_script, out_dir, profile, dep_info):
+    dependency_tag = "\n".join([return_galax_tag(i[0], i[1], dep_info) for i in return_dependencies(r_script)])
     current_dir = os.getcwd()
     temp_dir = tempfile.mkdtemp(dir=current_dir)
 
     if not os.path.exists(os.path.join(current_dir, out_dir)):
         os.makedirs(os.path.join(current_dir, out_dir))
         
-
     edited_r_script  = os.path.join(temp_dir, "%s_edited.r"%(r_script.split('/')[len(r_script.split('/'))-1].split('.')[0])) 
     
     print("####################################################################")
@@ -44,12 +40,9 @@ def main(r_script, out_dir, profile):
     python_code_as_string = json_to_python(json_out)
     param_info_dict = {}
     argument_string = json_to_python_for_param_info(json_out)
-
     exec(argument_string, globals(), param_info_dict)
-
     param_info = param_info_dict.get('param_info')
-    param_cat = extract_simple_parser_info(param_info)
-
+    # param_cat = extract_simple_parser_info(param_info)
 
     print("####################################################################")
     print("Converted R arguments to Python argparse successfully...")
@@ -76,21 +69,33 @@ def main(r_script, out_dir, profile):
     # profile = '3.10'
     filename = r_script.split('/')[len(r_script.split('/'))-1]
 
-    Reformated_command = blankenberg_parameters.oynaxraoret_to_cmd_line(params, filename).replace(filename, "Rscript '$__tool_directory__/%s'"%(filename))
+    # Reformated_command = blankenberg_parameters.oynaxraoret_to_cmd_line(params, filename).replace(filename, "Rscript '$__tool_directory__/%s'"%(filename))
+    if blankenberg_parameters.param_cat['subparsers'] != {}:
+        cond_params = blankenberg_parameters.generate_conditional_block( {})
+        cond_command = blankenberg_parameters.generate_command_section_subpro( {})
+    else:
+        cond_params, cond_command = '', ''
 
-    inputs = [
-        blankenberg_parameters.generate_conditional_block( {}),
-        blankenberg_parameters.generate_mutual_group_conditionals( {}),
+    if blankenberg_parameters.param_cat['mutually_exclusive_groups']:
+        mut_cond_params = blankenberg_parameters.generate_mutual_group_conditionals( {}),
+        mut_cond_command = blankenberg_parameters.generate_mutual_group_command( {}),
+    else:
+        mut_cond_params, mut_cond_command = '', ''
+
+    inputs = [    
+        cond_params,  
         blankenberg_parameters.generate_misc_params( {}),
+        mut_cond_params
     ]
 
     command_str = [
         "Rscript '$__tool_directory__/%s'\n"%(filename),
-        blankenberg_parameters.generate_command_section_subpro( {}),
-        blankenberg_parameters.generate_mutual_group_command( {}),
-        blankenberg_parameters.generate_misc_cmd({})
+        blankenberg_parameters.generate_misc_cmd({}),
+        cond_command,
+        mut_cond_command ,
     ]
 
+    # print(blankenberg_parameters.oynaxraoret_to_outputs(params))
     template_dict = {
         'id': filename.replace( '-', '_').strip('.r'),
         'tool_type': tool_type,
@@ -131,7 +136,8 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output_dir', required=False, default='out')
     parser.add_argument('-p', '--profile', required=False, default="22.01")
     parser.add_argument('-d', '--description', required=False, default="tool based on R script")
+    parser.add_argument('-s', '--dependencies', required=False,  default=False, help=" Extract dependency information..")
 
     args = parser.parse_args()
 
-    main(args.r_script_name, args.output_dir, args.profile)
+    main(args.r_script_name, args.output_dir, args.profile, args.dependencies)

@@ -2,6 +2,7 @@ import json
 import os 
 import argparse
 import rpy2.robjects.packages as rpackages
+from rpy2.robjects.packages import PackageNotInstalledError
 import xml.etree.ElementTree as ET
 # from r_script_to_galaxy_wrapper import FakeArg
 from anvio import FakeArg, SKIP_PARAMETER_NAMES 
@@ -16,7 +17,6 @@ class CustomFakeArg(FakeArg):
     def generate_conditional_block(self,  params):
         """Generate Galaxy XML <conditional> block based on param definitions and subprocess mapping."""
         # Build lookup: argument -> XML snippet
-
         sub_process = self.param_cat['subparsers']
 
         param_lookup = {}
@@ -25,10 +25,13 @@ class CustomFakeArg(FakeArg):
                 arg = d.name
                 if arg:
                     param_lookup[arg] = d.to_xml_param()
+            else:
+                print(d.name)
 
         xml_lines = []
         xml_lines.append('<conditional name="sub_process">')
         xml_lines.append('  <param name="process" type="select" label="Select Process">')
+
         for proc in sub_process:
             xml_lines.append(f'    <option value="{proc}">{proc.capitalize()}</option>')
         xml_lines.append('  </param>')
@@ -207,9 +210,6 @@ class CustomFakeArg(FakeArg):
                     
         return "\n\t".join(misc_lines)
 
-        
-
-
 def clean_r_script(lines):
     new_lines = []
 
@@ -225,7 +225,7 @@ def clean_r_script(lines):
 def edit_r_script(r_script_path, edited_r_script_path, fakearg_path=None, json_file_name="out.json"):
     
     if  not fakearg_path :
-        fakearg_path  =  os.path.join(os.getcwd(), 'FakeArg.r')
+        fakearg_path  =  os.path.join(os.getcwd(),'r_script', 'FakeArg.r')
    
     with open(r_script_path,  'r' ) as fh:
         input = fh.read()
@@ -253,13 +253,18 @@ def return_dependencies(r_script_path):
         input = fh.read()
         for i in input.split('\n'):
             if "library(" in i and "argparse" not in i:
-                package_name = i.split('(')[1].strip(')')
-                package_importr = rpackages.importr( package_name)
-                packages['name'] =  package_name
-                packages['version'] =  package_importr.__version__
-                package_list.append((package_name, package_importr.__version__))
-    return package_list
+                package_name = i.split('library(')[1].replace(')', '')
+                # print("262", package_name.replace(')', ''))
+                try:
+                    package_importr = rpackages.importr( package_name)
+                    packages['name'] =  package_name
+                    packages['version'] =  package_importr.__version__
+                    package_list.append((package_name, package_importr.__version__))
 
+                except PackageNotInstalledError:
+                    print(f"❌ The R package {package_name} is not installed.")
+                    package_list.append((package_name, ' '))
+    return package_list
 
 def clean_json(json_file):
     with open(json_file) as testread:
@@ -269,7 +274,6 @@ def clean_json(json_file):
         if "add_argument" in i:
             cleaned_json.append("parser.add_argument"+i.split('.add_argument')[1])
     return cleaned_json
-
 
 # def clean_json(json_file):
 #     with open(json_file) as testread:
