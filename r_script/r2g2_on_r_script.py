@@ -14,7 +14,14 @@ from RScriptSupport import (
     extract_simple_parser_info,
 )
 
-def main(r_script, out_dir, profile, dep_info):
+def main(r_script, out_dir, profile, dep_info, description, tool_version, citation_doi):
+
+    if not citation_doi:
+        citation_doi = ''
+
+    if not description:
+        description = r_script.split('/')[len(r_script.split('/'))-1].split('.')[0] + " tool"
+
     dependency_tag = "\n".join([return_galax_tag(i[0], i[1], dep_info) for i in return_dependencies(r_script)])
     current_dir = os.getcwd()
     temp_dir = tempfile.mkdtemp(dir=current_dir)
@@ -66,7 +73,6 @@ def main(r_script, out_dir, profile, dep_info):
 
     DEFAULT_TOOL_TYPE = "test_tools"
     tool_type = DEFAULT_TOOL_TYPE
-    # profile = '3.10'
     filename = r_script.split('/')[len(r_script.split('/'))-1]
 
     # Reformated_command = blankenberg_parameters.oynaxraoret_to_cmd_line(params, filename).replace(filename, "Rscript '$__tool_directory__/%s'"%(filename))
@@ -97,24 +103,22 @@ def main(r_script, out_dir, profile, dep_info):
 
     # print(blankenberg_parameters.oynaxraoret_to_outputs(params))
     template_dict = {
-        'id': filename.replace( '-', '_').strip('.r'),
+        'id': filename.lower().replace( '-', '_').replace('.r', ''),
         'tool_type': tool_type,
         'profile': profile,
-        'name': filename.replace( '-', '_').strip('.r'),
-        'version': '0.1.0',
-        'description': blankenberg_parameters.description,
+        'name': filename.lower().replace( '-', '_').replace('.r', ''),
+        'version': tool_version,
+        'description': description,
         #'macros': None,
         'version_command': '%s --version' % filename,
         'requirements': dependency_tag,
-        # 'command': commands,
         'command': "\n\n".join(command_str), 
         'inputs': inputs,
         'outputs': blankenberg_parameters.oynaxraoret_to_outputs(params),
         #'tests': None,
-        #'tests': { output:'' },
         'help': format_help(blankenberg_parameters.format_help().replace(os.path.basename(__file__), filename)),
-        # 'doi': [''],
-        # 'bibtex_citations': [galaxy_tool_citation]
+        'doi': citation_doi.split(','),
+        'bibtex_citations': galaxy_tool_citation,
         'bibtex_citations': ''
         }
 
@@ -135,9 +139,12 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--r_script_name', required=True, help="Provide the path of an R script... ")
     parser.add_argument('-o', '--output_dir', required=False, default='out')
     parser.add_argument('-p', '--profile', required=False, default="22.01")
-    parser.add_argument('-d', '--description', required=False, default="tool based on R script")
+    parser.add_argument('-d', '--description', required=False, default=None, help="tool based on R script")
     parser.add_argument('-s', '--dependencies', required=False,  default=False, help=" Extract dependency information..")
+    parser.add_argument('-v', '--tool_version', required=False,  default='0.0.1', help="Galaxy tool version..")
+    parser.add_argument('-c', '--citation_doi', required=False,  default=None, help="Comma separated Citation DOI.")
+
 
     args = parser.parse_args()
 
-    main(args.r_script_name, args.output_dir, args.profile, args.dependencies)
+    main(args.r_script_name, args.output_dir, args.profile, args.dependencies, args.description, args.tool_version, args.citation_doi)

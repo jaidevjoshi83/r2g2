@@ -6,6 +6,10 @@ from rpy2.robjects.packages import PackageNotInstalledError
 import xml.etree.ElementTree as ET
 # from r_script_to_galaxy_wrapper import FakeArg
 from anvio import FakeArg, SKIP_PARAMETER_NAMES 
+from pathlib import Path
+
+# Absolute path to the script file
+script_path = Path(__file__).resolve().parent
 
 class CustomFakeArg(FakeArg):
     def __init__(self, *args, **kwargs):
@@ -214,24 +218,27 @@ def clean_r_script(lines):
     new_lines = []
 
     for i, line in enumerate(lines):
-        if "parse_args()" in line:
+        if "parse_args()" in line :
             new_lines.append(line)
             break  
+        elif "library"  in line:
+            pass
         else:
             new_lines.append(line)
+
+    new_lines.insert(1, 'library(argparse)')
     new_string = '\n'.join(new_lines)
     return new_string
 
 def edit_r_script(r_script_path, edited_r_script_path, fakearg_path=None, json_file_name="out.json"):
     
     if  not fakearg_path :
-        fakearg_path  =  os.path.join(os.getcwd(),'r_script', 'FakeArg.r')
+        fakearg_path  =  os.path.join(script_path, 'FakeArg.r')
    
     with open(r_script_path,  'r' ) as fh:
         input = fh.read()
 
-    cleaned_lines = clean_r_script(input.split('\n'))    
-
+    cleaned_lines = clean_r_script(input.split('\n'))  
     new_input = """source("%s")\ntool_params = function (){\n"""%(fakearg_path) 
     new_input += cleaned_lines.replace('ArgumentParser', "FakeArgumentParser")
 
@@ -267,6 +274,8 @@ def return_dependencies(r_script_path):
     return package_list
 
 def clean_json(json_file):
+
+    print("#####", json_file)
     with open(json_file) as testread:
         data = json.loads(testread.read())
     cleaned_json = []
