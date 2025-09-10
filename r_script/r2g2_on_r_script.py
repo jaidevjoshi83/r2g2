@@ -6,13 +6,22 @@ import shutil
 from r_script_to_galaxy_wrapper import *
 from dependency_generator import  return_galax_tag
 import xml.etree.ElementTree as ET
+from xml.dom import minidom
+
 from RScriptSupport import (
     edit_r_script,
     json_to_python,
     return_dependencies,
     json_to_python_for_param_info,
     extract_simple_parser_info,
+    #TBD: R's logical type need be handled correctly while building galaxy input params. 
+    logical
 )
+
+def generate_galaxy_xml(xml_str):
+    
+    xml_str = ET.tostring(xml_str, encoding="unicode")
+    return minidom.parseString(xml_str).toprettyxml(indent="  ")
 
 def main(r_script, out_dir, profile, dep_info, description, tool_version, citation_doi):
 
@@ -42,14 +51,21 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     print("####################################################################")
    
     edit_r_script(r_script, edited_r_script, json_file_name=json_out )
+
+   
     subprocess.run(['Rscript',  edited_r_script])
 
     python_code_as_string = json_to_python(json_out)
     param_info_dict = {}
     argument_string = json_to_python_for_param_info(json_out)
+    argument_string.replace('logical', 'boolean')
+
     exec(argument_string, globals(), param_info_dict)
+
     param_info = param_info_dict.get('param_info')
     # param_cat = extract_simple_parser_info(param_info)
+
+    print(param_info)
 
     print("####################################################################")
     print("Converted R arguments to Python argparse successfully...")
@@ -67,6 +83,8 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     blankenberg_parameters = local_dict.get('blankenberg_parameters')
     blankenberg_parameters.param_cat = extract_simple_parser_info(param_info)
 
+    print(blankenberg_parameters.param_cat )
+
     print("####################################################################")
     print("Tool parameters have been extracted successfully...")
     print("####################################################################")
@@ -75,10 +93,15 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     tool_type = DEFAULT_TOOL_TYPE
     filename = r_script.split('/')[len(r_script.split('/'))-1]
 
+
+    print(generate_galaxy_xml(blankenberg_parameters.dict_to_xml()))
+
     # Reformated_command = blankenberg_parameters.oynaxraoret_to_cmd_line(params, filename).replace(filename, "Rscript '$__tool_directory__/%s'"%(filename))
     if blankenberg_parameters.param_cat['subparsers'] != {}:
-        cond_params = blankenberg_parameters.generate_conditional_block( {})
-        cond_command = blankenberg_parameters.generate_command_section_subpro( {})
+        # cond_params = blankenberg_parameters.generate_conditional_block( {})
+        # cond_command = blankenberg_parameters.generate_command_section_subpro( {})
+        # print(blankenberg_parameters.generate_conditional_block())
+        pass
     else:
         cond_params, cond_command = '', ''
 
@@ -89,7 +112,7 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
         mut_cond_params, mut_cond_command = '', ''
 
     inputs = [    
-        cond_params,  
+        # cond_params,  
         blankenberg_parameters.generate_misc_params( {}),
         mut_cond_params
     ]
@@ -97,16 +120,17 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     command_str = [
         "Rscript '$__tool_directory__/%s'\n"%(filename),
         blankenberg_parameters.generate_misc_cmd({}),
-        cond_command,
-        mut_cond_command ,
+        # cond_command,
+        mut_cond_command[0] ,
     ]
-
     # print(blankenberg_parameters.oynaxraoret_to_outputs(params))
+    cleaned_filename = filename.lower().replace( '-', '_').replace('.r', '')
+
     template_dict = {
-        'id': filename.lower().replace( '-', '_').replace('.r', ''),
+        'id': cleaned_filename ,
         'tool_type': tool_type,
         'profile': profile,
-        'name': filename.lower().replace( '-', '_').replace('.r', ''),
+        'name': cleaned_filename,
         'version': tool_version,
         'description': description,
         #'macros': None,
@@ -124,7 +148,7 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
 
     tool_xml = Template(TOOL_TEMPLATE).render( **template_dict )
 
-    with open( os.path.join ('./', out_dir, "%s.xml" % filename ), 'w') as out:
+    with open( os.path.join ('./', out_dir, "%s.xml" % cleaned_filename ), 'w') as out:
         out.write(tool_xml)
 
     if os.path.exists(temp_dir) and os.path.isdir(temp_dir):
@@ -143,7 +167,6 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--dependencies', required=False,  default=False, help=" Extract dependency information..")
     parser.add_argument('-v', '--tool_version', required=False,  default='0.0.1', help="Galaxy tool version..")
     parser.add_argument('-c', '--citation_doi', required=False,  default=None, help="Comma separated Citation DOI.")
-
 
     args = parser.parse_args()
 

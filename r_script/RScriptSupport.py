@@ -4,12 +4,19 @@ import argparse
 import rpy2.robjects.packages as rpackages
 from rpy2.robjects.packages import PackageNotInstalledError
 import xml.etree.ElementTree as ET
+from xml.dom import minidom
 # from r_script_to_galaxy_wrapper import FakeArg
 from anvio import FakeArg, SKIP_PARAMETER_NAMES 
 from pathlib import Path
+import re
 
 # Absolute path to the script file
 script_path = Path(__file__).resolve().parent
+
+
+def clean_arg_name(arg: str) -> str:
+    """Remove only leading '-' or '--' but preserve internal dashes/underscores."""
+    return re.sub(r"^[-]+", "", arg).replace("-", "_")
 
 class CustomFakeArg(FakeArg):
     def __init__(self, *args, **kwargs):
@@ -17,41 +24,67 @@ class CustomFakeArg(FakeArg):
         self.param_cat = {}
         # call parent constructor
         super().__init__(*args, **kwargs)
-    
-    def generate_conditional_block(self,  params):
-        """Generate Galaxy XML <conditional> block based on param definitions and subprocess mapping."""
-        # Build lookup: argument -> XML snippet
-        sub_process = self.param_cat['subparsers']
 
-        param_lookup = {}
-        for d in self.oynaxraoret_get_params( params ):
+    def param_xml_gen(self, param_name, param_type="text", label=None):
+        """Return a Galaxy <param> element as a string."""
+        if label is None:
+            label = param_name
+        return f'<param name="{param_name.lstrip("-")}" type="{param_type}" label="{label}" />'
+
+    def dict_to_xml(self, spec=None, parent=None, subparser_name=None, first=True):
+        """Convert argparse-like dict into Galaxy tool XML elements."""
+
+        if not spec: 
+            spec =  self.param_cat
+        
+        if first:
+            cond = ET.Element("conditional", name="subparser_selector")
+            param = ET.SubElement(cond, "param", name="subparser", type="select", label="Select analysis type")
+            for sp in spec['subparsers'].keys():
+                ET.SubElement(param, "option", value=sp).text = sp
+            parent = cond
+
+            for sp, sp_spec in spec['subparsers'].items():
+                when = ET.SubElement(cond, "when", value=sp)
+                self.dict_to_xml(sp_spec, parent=when, subparser_name=sp, first=False)
+
+            for group_name, opts in spec.get("mutually_exclusive_groups", {}).items():
+                cond2 = ET.SubElement(parent, "conditional", name=f"{group_name}_selector")
+                param2 = ET.SubElement(cond2, "param", name=f"{group_name}", type="select", label=f"Choose {group_name}")
+                for o in opts:
+                    ET.SubElement(param2, "option", value=o).text = o
+                for o in opts:
+                    when2 = ET.SubElement(cond2, "when", value=o)
+                    when2.append(ET.fromstring(self.generate_param(o)))
+
+            for opt in spec.get("groups", {}).get("options", []):
+                if opt != "--help":
+                    parent.append(ET.fromstring(self.generate_param(opt)))
+            return cond
+
+        # Recursive case for subparsers
+        for group_name, opts in spec.get("mutually_exclusive_groups", {}).items():
+            cond2 = ET.SubElement(parent, "conditional", name=f"{subparser_name}_{group_name}")
+            param2 = ET.SubElement(cond2, "param", name=f"{group_name}", type="select", label=f"Choose {group_name}")
+            for o in opts:
+                ET.SubElement(param2, "option", value=o).text = o
+            for o in opts:
+                when2 = ET.SubElement(cond2, "when", value=o)
+                when2.append(ET.fromstring(self.generate_param(o)))
+
+        for opt in spec.get("groups", {}).get("options", []):
+            if opt != "--help":
+                parent.append(ET.fromstring( self.generate_param(opt)))
+
+        return parent
+        
+    def generate_param(self, opt):
+        for d in self.oynaxraoret_get_params( {} ):
             if d.name not in SKIP_PARAMETER_NAMES and d.is_input:
-                arg = d.name
-                if arg:
-                    param_lookup[arg] = d.to_xml_param()
-            else:
-                print(d.name)
+                clean_opt  = clean_arg_name(opt) 
+                if clean_opt == d.name:
+                    return d.to_xml_param()
 
-        xml_lines = []
-        xml_lines.append('<conditional name="sub_process">')
-        xml_lines.append('  <param name="process" type="select" label="Select Process">')
-
-        for proc in sub_process:
-            xml_lines.append(f'    <option value="{proc}">{proc.capitalize()}</option>')
-        xml_lines.append('  </param>')
-
-        for proc, args in sub_process.items():
-            xml_lines.append(f'  <when value="{proc}">')
-            for arg in args:
-                if arg in param_lookup.keys():
-                    xml_lines.append(f'    {param_lookup[arg]}')
-                else:
-                    xml_lines.append(f'    <!-- No param XML found for {arg} -->')
-            xml_lines.append('  </when>')
-
-        xml_lines.append('</conditional>')
-        return "    \n".join(xml_lines)
-    
     def generate_mutual_group_conditionals(self,   params):
         """Generate <conditional> blocks for each mutual exclusion group."""
        
@@ -114,10 +147,42 @@ class CustomFakeArg(FakeArg):
 
         return "\n\t".join(misc_lines)
     
-    def generate_command_section_subpro(self, params):
+
+    def generate_command_section_subpro(self, spec, tool_id="example_tool"):
+        cmd_parts = []  # Galaxy allows CDATA for cleaner commands
+        cmd_parts.append(tool_id)   # base executable
+
+        # conditional for subparser
+        cmd_parts.append("## Subparser")
+        cmd_parts.append("$subparser_selector.subparser")
+
+        for sub_name, sub_info in spec.get("subparsers", {}).items():
+            cmd_parts.append(f"#if $subparser_selector.subparser == '{sub_name}'")
+
+            # add normal params
+            for opt in sub_info["groups"].get("options", []):
+                if opt == "--help" or any(opt in v for v in sub_info["mutually_exclusive_groups"].values()):
+                    continue
+                arg_name = opt.lstrip("-").replace("-", "_")
+                cmd_parts.append(f"    #if str($subparser_selector['{arg_name}']) != ''")
+                cmd_parts.append(f"        {opt} '${{subparser_selector.{arg_name}}}'")
+                cmd_parts.append("    #end if")
+
+            # handle mutually exclusive groups
+            for gname, gopts in sub_info["mutually_exclusive_groups"].items():
+                cmd_parts.append(f"    #if $subparser_selector.{sub_name}_{gname}.selector")
+                cmd_parts.append(f"        $subparser_selector.{sub_name}_{gname}.selector")
+                cmd_parts.append("    #end if")
+
+            cmd_parts.append("#end if")
+
+        # cmd_parts.append("]]>")
+        return "\n".join(cmd_parts)
+
+    
+    def generate_command_section_subpro_old(self, params):
         """Generate Galaxy XML <command> block matching the conditional subprocess options."""
         # Build lookup: argument -> name
-
         # for d in param_strings:
         #     param = ET.fromstring(d)
         #     arg = param.attrib.get('argument')
@@ -274,8 +339,6 @@ def return_dependencies(r_script_path):
     return package_list
 
 def clean_json(json_file):
-
-    print("#####", json_file)
     with open(json_file) as testread:
         data = json.loads(testread.read())
     cleaned_json = []
@@ -291,7 +354,6 @@ def clean_json(json_file):
 #     return data
 
 def json_to_python_for_param_info(json_file):
-
     with open(json_file) as testread:
         data = json.loads(testread.read())
 
@@ -316,10 +378,8 @@ param_info = param_info_parsing(dict(locals()))
 def json_to_python(json_file):
 
     data = clean_json(json_file)
-    # print(data)
     parser_name = 'parser'     
     args_string = '\n    '.join(data)
-    # print(args_string )
     arg_str_function = f"""
 #!/usr/bin/env python
 # from r_script_to_galaxy_wrapper import FakeArg
@@ -350,6 +410,51 @@ blankenberg_parameters = r_script_argument_parsing(dict(locals()))
     return arg_str_function
 
 def extract_simple_parser_info(parser):
+    def extract_from_parser(p):
+        info = {'subparsers': {}, 'mutually_exclusive_groups': {}, 'groups': {}}
+
+        # collect all actions in mutually exclusive groups so we can skip them in normal groups
+        mex_actions = set()
+        for mex_group in getattr(p, '_mutually_exclusive_groups', []):
+            for a in mex_group._group_actions:
+                mex_actions.add(a)
+
+        # helper to get the preferred argument string (long option if available)
+        def get_arg_name(a):
+            if not a.option_strings:
+                return a.dest
+            # prefer the longest option (e.g. --something over -s)
+            return max(a.option_strings, key=len)
+
+        # 1. Groups (exclude actions already in mutually exclusive groups)
+        for group in p._action_groups:
+            if group.title in ('positional arguments', 'optional arguments'):
+                continue
+            group_args = [
+                get_arg_name(a)
+                for a in group._group_actions if a not in mex_actions
+            ]
+            if group_args:
+                info['groups'][group.title] = group_args
+
+        # 2. Mutually exclusive groups
+        for i, mex_group in enumerate(getattr(p, '_mutually_exclusive_groups', [])):
+            mex_args = [get_arg_name(a) for a in mex_group._group_actions]
+            if mex_args:
+                info['mutually_exclusive_groups'][f'group{i}'] = mex_args
+
+        # 3. Subparsers (recursive!)
+        for action in p._actions:
+            if isinstance(action, argparse._SubParsersAction):
+                for sub_name, sub_parser in action.choices.items():
+                    info['subparsers'][sub_name] = extract_from_parser(sub_parser)
+
+        return info
+
+    return extract_from_parser(parser)
+
+
+def extract_simple_parser_info_old(parser):
     result = {'subparsers': {}, 'mutually_exclusive_groups': {}, 'groups': {}}
 
     # 1. Groups
@@ -467,39 +572,47 @@ def generate_mutual_group_conditionals(param_strings, mut_groups):
 
     return "\n".join(xml_lines)
 
-def generate_mutual_group_command(param_strings, mut_groups):
-    """Generate <command> block for mutually exclusive argument groups."""
-    # Build lookup: argument -> param name
-    param_lookup = {}
-    for d in param_strings:
-        param = ET.fromstring(d)
-        arg = param.attrib.get('argument')
-        name = param.attrib.get('name')
-        if arg and name:
-            param_lookup[arg] = name
+# def generate_mutual_group_command(param_strings, mut_groups):
+#     """Generate <command> block for mutually exclusive argument groups."""
+#     # Build lookup: argument -> param name
+#     param_lookup = {}
+#     for d in param_strings:
+#         param = ET.fromstring(d)
+#         arg = param.attrib.get('argument')
+#         name = param.attrib.get('name')
+#         if arg and name:
+#             param_lookup[arg] = name
 
-    cmd_lines = []
-    cmd_lines.append('<command>')
-    cmd_lines.append('    tool_exe')
+#     cmd_lines = []
+#     cmd_lines.append('<command>')
+#     cmd_lines.append('    tool_exe')
 
-    # Loop over groups
-    for group_name, args in mut_groups.items():
-        first = True
-        for arg in args:
-            safe_option = arg.lstrip('-').replace('-', '_')
-            if first:
-                cmd_lines.append(f'    #if ${group_name}.process == "{safe_option}"')
-                first = False
-            else:
-                cmd_lines.append(f'    #elif ${group_name}.process == "{safe_option}"')
+#     # Loop over groups
+#     for group_name, args in mut_groups.items():
+#         first = True
+#         for arg in args:
+#             safe_option = arg.lstrip('-').replace('-', '_')
+#             if first:
+#                 cmd_lines.append(f'    #if ${group_name}.process == "{safe_option}"')
+#                 first = False
+#             else:
+#                 cmd_lines.append(f'    #elif ${group_name}.process == "{safe_option}"')
 
-            if arg in param_lookup:
-                cmd_lines.append(f'        {arg} "${{{group_name}.{param_lookup[arg]}}}"')
-            else:
-                cmd_lines.append(f'        {arg} "${{{group_name}.missing_param_for_{safe_option}}}"')
+#             if arg in param_lookup:
+#                 cmd_lines.append(f'        {arg} "${{{group_name}.{param_lookup[arg]}}}"')
+#             else:
+#                 cmd_lines.append(f'        {arg} "${{{group_name}.missing_param_for_{safe_option}}}"')
 
-        cmd_lines.append('    #end if')
+#         cmd_lines.append('    #end if')
 
-    cmd_lines.append('</command>')
-    return "\n".join(cmd_lines)
+#     cmd_lines.append('</command>')
+#     return "\n".join(cmd_lines)
 
+def logical(value):
+    val = value.lower()
+    if val == "true":
+        return True
+    elif val == "false":
+        return False
+    else:
+        raise argparse.ArgumentTypeError(f"Invalid logical value: {value}. Only TRUE or FALSE allowed.")
