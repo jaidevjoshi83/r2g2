@@ -93,8 +93,10 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     tool_type = DEFAULT_TOOL_TYPE
     filename = r_script.split('/')[len(r_script.split('/'))-1]
 
-
-    print(generate_galaxy_xml(blankenberg_parameters.dict_to_xml()))
+    # print(generate_galaxy_xml(blankenberg_parameters.dict_to_xml()))
+    print(blankenberg_parameters.generate_galaxy_xml(blankenberg_parameters.dict_to_xml()))
+    print("\n".join(blankenberg_parameters.flat_params()))
+    # print("\n".join(blankenberg_parameters.flat_params()))
 
     # Reformated_command = blankenberg_parameters.oynaxraoret_to_cmd_line(params, filename).replace(filename, "Rscript '$__tool_directory__/%s'"%(filename))
     if blankenberg_parameters.param_cat['subparsers'] != {}:
@@ -121,7 +123,7 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
         "Rscript '$__tool_directory__/%s'\n"%(filename),
         blankenberg_parameters.generate_misc_cmd({}),
         # cond_command,
-        mut_cond_command[0] ,
+        # mut_cond_command[0] ,
     ]
     # print(blankenberg_parameters.oynaxraoret_to_outputs(params))
     cleaned_filename = filename.lower().replace( '-', '_').replace('.r', '')

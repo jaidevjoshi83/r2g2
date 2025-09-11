@@ -14,9 +14,7 @@ import re
 script_path = Path(__file__).resolve().parent
 
 
-def clean_arg_name(arg: str) -> str:
-    """Remove only leading '-' or '--' but preserve internal dashes/underscores."""
-    return re.sub(r"^[-]+", "", arg).replace("-", "_")
+
 
 class CustomFakeArg(FakeArg):
     def __init__(self, *args, **kwargs):
@@ -30,60 +28,193 @@ class CustomFakeArg(FakeArg):
         if label is None:
             label = param_name
         return f'<param name="{param_name.lstrip("-")}" type="{param_type}" label="{label}" />'
+    
+    # def dict_to_xml(self, spec=None, parent=None, subparser_name=None, first=True):
+    #     """Convert argparse-like dict into Galaxy tool XML elements."""
+
+    #     if not spec: 
+    #         spec =  self.param_cat
+
+    #     # --- Top-level case ---
+    #     if first:
+    #         if spec.get("subparsers"):
+    #             cond = ET.Element("conditional", name="subparser_selector")
+    #             param = ET.SubElement(cond, "param", name="subparser", type="select", label="Select analysis type")
+    #             for sp in spec['subparsers'].keys():
+    #                 ET.SubElement(param, "option", value=sp).text = sp
+    #             parent = cond
+
+    #             for sp, sp_spec in spec['subparsers'].items():
+    #                 when = ET.SubElement(cond, "when", value=sp)
+    #                 self.dict_to_xml(sp_spec, parent=when, subparser_name=sp, first=False)
+    #         else:
+    #             parent = ET.Element("inputs")
+
+    #         # add top-level mutually exclusive groups
+    #         for group_name, opts in spec.get("mutually_exclusive_groups", {}).items():
+    #             cond2 = ET.SubElement(parent, "conditional", name=f"{group_name}_selector")
+    #             param2 = ET.SubElement(cond2, "param", name=f"{group_name}", type="select", label=f"Choose {group_name}")
+    #             for o in opts:
+    #                 ET.SubElement(param2, "option", value=o).text = o
+    #             for o in opts:
+    #                 when2 = ET.SubElement(cond2, "when", value=o)
+    #                 when2.append(ET.fromstring(self.generate_param(o)))
+
+    #         # add top-level normal options
+    #         for opt in spec.get("groups", {}).get("options", []):
+    #             if opt != "--help":
+    #                 parent.append(ET.fromstring(self.generate_param(opt)))
+
+    #         return parent
+
+    #     # --- Recursive case for subparsers ---
+    #     for group_name, opts in spec.get("mutually_exclusive_groups", {}).items():
+    #         cond2 = ET.SubElement(parent, "conditional", name=f"{subparser_name}_{group_name}")
+    #         param2 = ET.SubElement(cond2, "param", name=f"{group_name}", type="select", label=f"Choose {group_name}")
+    #         for o in opts:
+    #             ET.SubElement(param2, "option", value=o).text = o
+    #         for o in opts:
+    #             when2 = ET.SubElement(cond2, "when", value=o)
+    #             when2.append(ET.fromstring(self.generate_param(o)))
+
+    #     for opt in spec.get("groups", {}).get("options", []):
+    #         if opt != "--help":
+    #             # parent.append(ET.fromstring(self.generate_param(opt)))
+    #             pass
+
+    #     return parent
+
+    def param_xml_gen(self, param_name, param_type="text", label=None):
+        """Return a Galaxy <param> element as a string."""
+        if label is None:
+            label = param_name
+        return f'<param name="{param_name.lstrip("-")}" type="{param_type}" label="{label}" />'
+
 
     def dict_to_xml(self, spec=None, parent=None, subparser_name=None, first=True):
         """Convert argparse-like dict into Galaxy tool XML elements."""
-
-        if not spec: 
-            spec =  self.param_cat
+        if not spec:
+            spec = self.param_cat
         
         if first:
+            if spec['subparsers'] == {}:
+                return None 
             cond = ET.Element("conditional", name="subparser_selector")
             param = ET.SubElement(cond, "param", name="subparser", type="select", label="Select analysis type")
-            for sp in spec['subparsers'].keys():
+            for sp in spec.get("subparsers", {}).keys():
                 ET.SubElement(param, "option", value=sp).text = sp
             parent = cond
 
-            for sp, sp_spec in spec['subparsers'].items():
+            # recurse for subparsers
+            for sp, sp_spec in spec.get("subparsers", {}).items():
                 when = ET.SubElement(cond, "when", value=sp)
                 self.dict_to_xml(sp_spec, parent=when, subparser_name=sp, first=False)
-
-            for group_name, opts in spec.get("mutually_exclusive_groups", {}).items():
-                cond2 = ET.SubElement(parent, "conditional", name=f"{group_name}_selector")
-                param2 = ET.SubElement(cond2, "param", name=f"{group_name}", type="select", label=f"Choose {group_name}")
-                for o in opts:
-                    ET.SubElement(param2, "option", value=o).text = o
-                for o in opts:
-                    when2 = ET.SubElement(cond2, "when", value=o)
-                    when2.append(ET.fromstring(self.generate_param(o)))
-
-            for opt in spec.get("groups", {}).get("options", []):
-                if opt != "--help":
-                    parent.append(ET.fromstring(self.generate_param(opt)))
+            
             return cond
-
-        # Recursive case for subparsers
+        
+        # -------- Recursive case for subparser --------
+        # add subparser-specific mutually exclusive groups
         for group_name, opts in spec.get("mutually_exclusive_groups", {}).items():
-            cond2 = ET.SubElement(parent, "conditional", name=f"{subparser_name}_{group_name}")
+            cond2 = ET.Element("conditional", name=f"{subparser_name}_{group_name}")
             param2 = ET.SubElement(cond2, "param", name=f"{group_name}", type="select", label=f"Choose {group_name}")
             for o in opts:
                 ET.SubElement(param2, "option", value=o).text = o
             for o in opts:
                 when2 = ET.SubElement(cond2, "when", value=o)
                 when2.append(ET.fromstring(self.generate_param(o)))
+            parent.append(cond2)
 
-        for opt in spec.get("groups", {}).get("options", []):
-            if opt != "--help":
-                parent.append(ET.fromstring( self.generate_param(opt)))
-
+        # add subparser-specific normal params
+        for k in spec["groups"].keys():
+            for opt in spec["groups"][k]:
+                if opt != "--help":
+                    if "out" not in opt:
+                    # print(ET.fromstring(self.generate_param(opt)))
+                        parent.append(ET.fromstring(self.generate_param(opt)))
+                    # pass
         return parent
+
+    def generate_galaxy_xml(self, root):
+        # root = self.dict_to_xml(first=True)
+        if root:
+            xml_str = ET.tostring(root, encoding="unicode")
+            return minidom.parseString(xml_str).toprettyxml(indent="  ")
+        else:
+            return ''
+
+
+    # def mutual_conditional(self, subparser_name="root"):
+    #     spec = self.param_cat
+    #     """Return a list of <conditional> elements for mutually exclusive groups."""
+    #     conds = []
+    #     for group_name, opts in spec.get("mutually_exclusive_groups", {}).items():
+    #         cond2 = ET.Element("conditional", name=f"{subparser_name}")
+    #         param2 = ET.SubElement(cond2, "param", name=f"{group_name}", type="select", label=f"Choose {group_name}")
+    #         for o in opts:
+    #             ET.SubElement(param2, "option", value=o).text = o
+    #         for o in opts:
+    #             when2 = ET.SubElement(cond2, "when", value=o)
+    #             when2.append(ET.fromstring(self.generate_param(o)))
+    #         conds.append(cond2)
         
+    #     return conds
+    
+    def mutual_conditional(self,  subparser_name="root"):
+
+        spec = self.param_cat 
+        """Return a list of <conditional> elements for mutually exclusive groups."""
+        conds = []
+        for group_name in spec["mutually_exclusive_groups"].keys():
+
+            subparser_name  = group_name+"_selector"
+
+            cond2 = ET.Element("conditional", name=f"{subparser_name}")
+            param2 = ET.SubElement(cond2, "param", name=f"{group_name}", type="select", label=f"Choose {group_name}")
+            for o in spec["mutually_exclusive_groups"][group_name]:
+                ET.SubElement(param2, "option", value=o).text = o
+            for o in spec["mutually_exclusive_groups"][group_name]:
+                when2 = ET.SubElement(cond2, "when", value=o)
+                when2.append(ET.fromstring(self.generate_param(o)))
+            conds.append(cond2)
+        return conds
+    
+    def flat_params(self):
+        param_list = []
+        for elem in self.mutual_conditional( "group0_selector"):
+            # print(elem)
+            param_list.append("\n".join(self.generate_galaxy_xml(elem).split('\n')[1:]))
+        for elem in self.groups_params():
+            xml_str = ET.tostring(elem, encoding="unicode")
+            param_list.append("\n".join(minidom.parseString(xml_str).toprettyxml(indent="  ").split('\n')[1:]))
+        return param_list 
+
+
+    def groups_params(self):
+        """Return a list of <param> elements for normal group options."""
+        spec = self.param_cat
+        params = []
+        for k in spec["groups"].keys():
+            for opt in spec["groups"][k]:  
+                if opt != "--help":
+                    if "out" not in opt:
+                        # print(ET.fromstring(self.generate_param(opt)))
+                        params.append(ET.fromstring(self.generate_param(opt)))
+        # for i in params:
+        #     xml_str = ET.tostring(i, encoding="unicode")
+        #     # print(minidom.parseString(xml_str).toprettyxml(indent="  "))
+
+        return params
+    
+    def clean_arg_name(self, arg: str) -> str:
+        """Remove only leading '-' or '--' but preserve internal dashes/underscores."""
+        return re.sub(r"^[-]+", "", arg).replace("-", "_")
+                
     def generate_param(self, opt):
         for d in self.oynaxraoret_get_params( {} ):
             if d.name not in SKIP_PARAMETER_NAMES and d.is_input:
-                clean_opt  = clean_arg_name(opt) 
-                if clean_opt == d.name:
+                if self.clean_arg_name(opt) == d.name:
                     return d.to_xml_param()
+
 
     def generate_mutual_group_conditionals(self,   params):
         """Generate <conditional> blocks for each mutual exclusion group."""
