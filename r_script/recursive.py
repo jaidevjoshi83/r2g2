@@ -60,7 +60,7 @@ def dict_to_xml_and_command(spec, parent=None, subparser_name=None,
                 when.append(xml_child)
 
             cmd_parts.append(
-                format_block(f"'${{top_subparser.subparser_selector}}' == '{sp}'",
+                format_block(f"'${'top_subparser.subparser_selector'}' == '{sp}'",
                              cmd_child, 0)
             )
 
@@ -78,7 +78,9 @@ def dict_to_xml_and_command(spec, parent=None, subparser_name=None,
                                type="select",
                                label=f"Choose {group_name}")
         
-        mut_cond_command = f" #if {full_name}.{subparser_name}__mut_{group_name}.{group_name}_selector == '%s'\n%s\n     #end if "
+        inner_lavels = level*"    "
+        
+        mut_cond_command = f"\n{inner_lavels}#if '${full_name}.{subparser_name}__mut_{group_name}.{group_name}_selector' == '%s'\n%s\n{inner_lavels}#end if\n"
 
         for o in opts:
             ET.SubElement(param2, "option", value=o).text = o
@@ -87,11 +89,11 @@ def dict_to_xml_and_command(spec, parent=None, subparser_name=None,
         for o in opts:
             when2 = ET.SubElement(cond2, "when", value=o)
 
-            mut_cond_list.append(mut_cond_command%(clean_arg_name(o), f"        {full_name}.{subparser_name}__mut_{group_name}.{clean_arg_name(o)}"))
+            mut_cond_list.append(mut_cond_command%(clean_arg_name(o), f"{inner_lavels}    '${full_name}.{subparser_name}__mut_{group_name}.{clean_arg_name(o)}'"))
 
             when2.append(param_xml_gen(o, "boolean", o))
         parent.append(cond2)    
-        cmd_parts.append("    " * level + f"{ "\n    ".join(mut_cond_list)}")
+        cmd_parts.append("    " * level + f"{ "\n    ".join(mut_cond_list)}\n\n")
         
 
     # group_command = f" #if {full_name}.{subparser_name}__mut_{group_name}.{group_name}_selector == '%s'\n%s\n     #end if "
@@ -101,7 +103,7 @@ def dict_to_xml_and_command(spec, parent=None, subparser_name=None,
         if opt != "--help":
             parent.append(param_xml_gen(opt, "text", opt))
 
-            cmd_parts.append("    " * level + f"$'{full_name}.{clean_arg_name(opt)}'")
+            cmd_parts.append("    " * level + f"'${full_name}.{clean_arg_name(opt)}'\n")
 
     # Nested subparsers
     if spec.get("subparsers"):
