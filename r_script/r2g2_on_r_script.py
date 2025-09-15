@@ -15,7 +15,8 @@ from RScriptSupport import (
     json_to_python_for_param_info,
     extract_simple_parser_info,
     #TBD: R's logical type need be handled correctly while building galaxy input params. 
-    logical
+    logical, 
+    pretty_xml
 )
 
 def generate_galaxy_xml(xml_str):
@@ -65,8 +66,6 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     param_info = param_info_dict.get('param_info')
     # param_cat = extract_simple_parser_info(param_info)
 
-    print(param_info)
-
     print("####################################################################")
     print("Converted R arguments to Python argparse successfully...")
     print("####################################################################")
@@ -83,7 +82,17 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     blankenberg_parameters = local_dict.get('blankenberg_parameters')
     blankenberg_parameters.param_cat = extract_simple_parser_info(param_info)
 
-    print(blankenberg_parameters.param_cat )
+
+    cond_section_param, cond_param_command =  blankenberg_parameters.dict_to_xml_and_command(   blankenberg_parameters.param_cat )
+
+    # if cond_section_param:
+    #     print( pretty_xml(cond_section_param))
+
+    if cond_param_command:
+        print(cond_param_command)
+
+
+    # print (ET.tostring(cond_section_param, encoding="unicode"))
 
     print("####################################################################")
     print("Tool parameters have been extracted successfully...")
@@ -94,8 +103,8 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     filename = r_script.split('/')[len(r_script.split('/'))-1]
 
     # print(generate_galaxy_xml(blankenberg_parameters.dict_to_xml()))
-    print(blankenberg_parameters.generate_galaxy_xml(blankenberg_parameters.dict_to_xml()))
-    print("\n".join(blankenberg_parameters.flat_params()))
+    # print(blankenberg_parameters.generate_galaxy_xml(blankenberg_parameters.dict_to_xml()))
+    # print("\n".join(blankenberg_parameters.flat_params()))
     # print("\n".join(blankenberg_parameters.flat_params()))
 
     # Reformated_command = blankenberg_parameters.oynaxraoret_to_cmd_line(params, filename).replace(filename, "Rscript '$__tool_directory__/%s'"%(filename))

@@ -95,9 +95,6 @@ def dict_to_xml_and_command(spec, parent=None, subparser_name=None,
         parent.append(cond2)    
         cmd_parts.append("    " * level + f"{ "\n    ".join(mut_cond_list)}\n\n")
         
-
-    # group_command = f" #if {full_name}.{subparser_name}__mut_{group_name}.{group_name}_selector == '%s'\n%s\n     #end if "
-
     # Normal params
     for opt in spec.get("groups", {}).get("options", []):
         if opt != "--help":
@@ -129,9 +126,6 @@ def dict_to_xml_and_command(spec, parent=None, subparser_name=None,
 
             if xml_child is not None:
                 when_nested.append(xml_child)
-
-            # print("118", f"{subparser_name}_subparser")
-
             inner_cmds.append(
                 format_block(
                     f"'${{{full_name}.{subparser_name}_subparser.{subparser_name}_subparser_selector}}' == '{sp}'",
