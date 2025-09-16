@@ -49,15 +49,16 @@ TOOL_TEMPLATE = """<tool id="{{id}}" name="{{name}}" version="{{version}}" profi
 {%- endif %}
 {%- endif %}
     <command><![CDATA[ 
+                Rscript '$__tool_directory__/{{file_name}}'
 {%- if command %}
-          {{ command }}
+    {{ command }}
 {%- else %}
         TODO: Fill in command template.
 {%- endif %}
     ]]></command>
     <inputs>
 {%- for input in inputs %}
-        {{ input }}
+       {{ input }}
 {%- endfor %}
     </inputs>
     <outputs>

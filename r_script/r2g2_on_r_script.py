@@ -79,20 +79,33 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
 
     exec(input, globals(), local_dict)
 
+    combined_xml = []
+    combined_command = []
+
     blankenberg_parameters = local_dict.get('blankenberg_parameters')
     blankenberg_parameters.param_cat = extract_simple_parser_info(param_info)
 
-
     cond_section_param, cond_param_command =  blankenberg_parameters.dict_to_xml_and_command(   blankenberg_parameters.param_cat )
-
-    # if cond_section_param:
-    #     print( pretty_xml(cond_section_param))
+    mut_input_param, mut_command = blankenberg_parameters.mutual_conditional(blankenberg_parameters.param_cat )
+    flat_param, flat_command = blankenberg_parameters.flat_param_groups(blankenberg_parameters.param_cat )
 
     if cond_param_command:
-        print(cond_param_command)
+        combined_xml.append("\n".join(pretty_xml(cond_section_param ).split("\n")[1:]))
 
+    if mut_input_param:
+        combined_xml.append(mut_input_param)
 
-    # print (ET.tostring(cond_section_param, encoding="unicode"))
+    if flat_param:
+        combined_xml.append(flat_param)
+
+    if cond_param_command:
+        combined_command.append(cond_param_command)   
+
+    if  mut_command:
+        combined_command.append( mut_command)
+
+    if flat_command :
+        combined_command.append(flat_command )
 
     print("####################################################################")
     print("Tool parameters have been extracted successfully...")
@@ -101,63 +114,36 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     DEFAULT_TOOL_TYPE = "test_tools"
     tool_type = DEFAULT_TOOL_TYPE
     filename = r_script.split('/')[len(r_script.split('/'))-1]
-
-    # print(generate_galaxy_xml(blankenberg_parameters.dict_to_xml()))
-    # print(blankenberg_parameters.generate_galaxy_xml(blankenberg_parameters.dict_to_xml()))
-    # print("\n".join(blankenberg_parameters.flat_params()))
-    # print("\n".join(blankenberg_parameters.flat_params()))
-
-    # Reformated_command = blankenberg_parameters.oynaxraoret_to_cmd_line(params, filename).replace(filename, "Rscript '$__tool_directory__/%s'"%(filename))
-    if blankenberg_parameters.param_cat['subparsers'] != {}:
-        # cond_params = blankenberg_parameters.generate_conditional_block( {})
-        # cond_command = blankenberg_parameters.generate_command_section_subpro( {})
-        # print(blankenberg_parameters.generate_conditional_block())
-        pass
-    else:
-        cond_params, cond_command = '', ''
-
-    if blankenberg_parameters.param_cat['mutually_exclusive_groups']:
-        mut_cond_params = blankenberg_parameters.generate_mutual_group_conditionals( {}),
-        mut_cond_command = blankenberg_parameters.generate_mutual_group_command( {}),
-    else:
-        mut_cond_params, mut_cond_command = '', ''
-
-    inputs = [    
-        # cond_params,  
-        blankenberg_parameters.generate_misc_params( {}),
-        mut_cond_params
-    ]
-
-    command_str = [
-        "Rscript '$__tool_directory__/%s'\n"%(filename),
-        blankenberg_parameters.generate_misc_cmd({}),
-        # cond_command,
-        # mut_cond_command[0] ,
-    ]
     # print(blankenberg_parameters.oynaxraoret_to_outputs(params))
     cleaned_filename = filename.lower().replace( '-', '_').replace('.r', '')
+
+    print()
 
     template_dict = {
         'id': cleaned_filename ,
         'tool_type': tool_type,
         'profile': profile,
-        'name': cleaned_filename,
+        'name': cleaned_filename,   
         'version': tool_version,
         'description': description,
         #'macros': None,
         'version_command': '%s --version' % filename,
         'requirements': dependency_tag,
-        'command': "\n\n".join(command_str), 
-        'inputs': inputs,
+        'command':"\n".join(combined_command), 
+        'inputs': ["\n".join(combined_xml)],
         'outputs': blankenberg_parameters.oynaxraoret_to_outputs(params),
         #'tests': None,
         'help': format_help(blankenberg_parameters.format_help().replace(os.path.basename(__file__), filename)),
         'doi': citation_doi.split(','),
         'bibtex_citations': galaxy_tool_citation,
-        'bibtex_citations': ''
+        'bibtex_citations': '',
+        'file_name':filename
         }
 
+
     tool_xml = Template(TOOL_TEMPLATE).render( **template_dict )
+
+    # print(tool_xml)
 
     with open( os.path.join ('./', out_dir, "%s.xml" % cleaned_filename ), 'w') as out:
         out.write(tool_xml)

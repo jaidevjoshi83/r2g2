@@ -24,14 +24,7 @@ class CustomFakeArg(FakeArg):
 
         self.param_cat = {}
         # call parent constructor
-        super().__init__(*args, **kwargs)
-
-    def param_xml_gen(self, param_name, param_type="text", label=None):
-        """Return a Galaxy <param> element as a string."""
-        if label is None:
-            label = param_name
-        return f'<param name="{param_name.lstrip("-")}" type="{param_type}" label="{label}" />'
-    
+        super().__init__(*args, **kwargs)    
 
     def format_block(self, condition, inner, level):
         """Helper to wrap inner block in a properly indented ##if block."""
@@ -154,13 +147,6 @@ class CustomFakeArg(FakeArg):
 
         return None, "\n".join(cmd_parts)
 
-    def param_xml_gen(self, param_name, param_type="text", label=None):
-        """Return a Galaxy <param> element as a string."""
-        if label is None:
-            label = param_name
-        return f'<param name="{param_name.lstrip("-")}" type="{param_type}" label="{label}" />'
-
-
     def generate_galaxy_xml(self, root):
         # root = self.dict_to_xml(first=True)
         if root:
@@ -169,37 +155,43 @@ class CustomFakeArg(FakeArg):
         else:
             return ''
 
+    def mutual_conditional(self,  spec):
 
-    def mutual_conditional(self,  subparser_name="root"):
+        mut_list = []
+        mut_command= []
 
-        spec = self.param_cat 
-        """Return a list of <conditional> elements for mutually exclusive groups."""
-        conds = []
-        for group_name in spec["mutually_exclusive_groups"].keys():
-
-            subparser_name  = group_name+"_selector"
-
-            cond2 = ET.Element("conditional", name=f"{subparser_name}")
-            param2 = ET.SubElement(cond2, "param", name=f"{group_name}", type="select", label=f"Choose {group_name}")
-            for o in spec["mutually_exclusive_groups"][group_name]:
+        for group_name, opts in spec.get("mutually_exclusive_groups", {}).items():
+            cond2 = ET.Element("conditional",
+                            name=f"mut_{group_name}")
+            
+            param2 = ET.SubElement(cond2, "param",
+                                name=f"{group_name}_selector",
+                                type="select",
+                                label=f"Choose {group_name}")
+            for o in opts:
+                # print(mut_cond_command%(clean_arg_name(o)))
                 ET.SubElement(param2, "option", value=o).text = o
-            for o in spec["mutually_exclusive_groups"][group_name]:
+            
+            for o in opts:
                 when2 = ET.SubElement(cond2, "when", value=o)
-                when2.append(ET.fromstring(self.generate_param(o, flat=True)))
-            conds.append(cond2)
-        return conds
-    
-    def flat_params(self):
+                mut_cond_command = f"\n#if '$mut_{group_name}.{group_name}_selector' == '%s'\n%s\n#end if\n"%(self.clean_arg_name(o), f"    '${group_name}.{self.clean_arg_name(o)}'")
+                mut_command.append(mut_cond_command)
+                when2.append(self.generate_param(o))
+            mut_list.append("\n".join(pretty_xml(cond2).split("\n")[1:]))
+                
+        return "\n".join(mut_list), "\n".join(mut_command)
+
+    def flat_param_groups(self, spec):
         param_list = []
-        for elem in self.mutual_conditional( "group0_selector"):
-            # print(elem)
-            param_list.append("\n".join(self.generate_galaxy_xml(elem).split('\n')[1:]))
-        for elem in self.groups_params():
-            xml_str = ET.tostring(elem, encoding="unicode")
-            param_list.append("\n".join(minidom.parseString(xml_str).toprettyxml(indent="  ").split('\n')[1:]))
-        return param_list 
-
-
+        command_list = []
+        for group in spec['groups'].keys():
+            for item in spec['groups'][group]:
+                if item != "--help" and "output"  not in item:
+                    param, command = self.generate_param( item, flat=True)
+                    param_list.append("\n".join(pretty_xml(param).split("\n")[1:]))
+                    command_list.append(command)
+        return "\n".join(param_list),  "\n".join(command_list)
+                
     def groups_params(self):
         """Return a list of <param> elements for normal group options."""
         spec = self.param_cat
@@ -222,18 +214,11 @@ class CustomFakeArg(FakeArg):
                 
     def generate_param(self, opt, flat=False):
         for d in self.oynaxraoret_get_params( {} ):
-
-            print(d.name)
             if d.name not in SKIP_PARAMETER_NAMES and d.is_input:
-        
                 if self.clean_arg_name(opt) == d.name:
-
-                    # return d.to_xml_param()
-                   
                     xml_str = d.to_xml_param()
-                
                     if flat:
-                        return xml_str
+                        return ET.fromstring(xml_str), d.to_cmd_line()
                     else:
                         return ET.fromstring(xml_str)
 
@@ -242,7 +227,6 @@ class CustomFakeArg(FakeArg):
         """Generate <conditional> blocks for each mutual exclusion group."""
        
         mut_groups = self.param_cat['mutually_exclusive_groups']
-
         # Build lookup: argument -> full <param> snippet
         param_lookup = {}
         for d in self.oynaxraoret_get_params( params ):
