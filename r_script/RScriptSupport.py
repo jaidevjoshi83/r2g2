@@ -10,8 +10,12 @@ from anvio import FakeArg, SKIP_PARAMETER_NAMES
 from pathlib import Path
 import re
 
+import functools
+import inspect
+
 # Absolute path to the script file
 script_path = Path(__file__).resolve().parent
+
 
 
 def pretty_xml(element):
@@ -35,7 +39,6 @@ class CustomFakeArg(FakeArg):
             f"{indent}#end if"
         )
 
-        
     def dict_to_xml_and_command(self, spec, parent=None, subparser_name=None,
                                 first=True, full_name=None, level=0):
         """
@@ -47,9 +50,6 @@ class CustomFakeArg(FakeArg):
         cmd_parts = []
 
         if first:
-            # if not spec.get('subparsers'):
-            #     return None, None
-            # Top-level subparser selector
             cond = ET.Element("conditional", name="top_subparser")
             param = ET.SubElement(cond, "param", name="subparser_selector",
                                 type="select", label="Select analysis type")
@@ -717,3 +717,5 @@ def logical(value):
         return False
     else:
         raise argparse.ArgumentTypeError(f"Invalid logical value: {value}. Only TRUE or FALSE allowed.")
+
+

@@ -87,6 +87,9 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     mut_input_param, mut_command = blankenberg_parameters.mutual_conditional(blankenberg_parameters.param_cat )
     flat_param, flat_command = blankenberg_parameters.flat_param_groups(blankenberg_parameters.param_cat )
 
+    output_params  = "\n".join(list(set([i.to_xml_param() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
+    output_command  = "\n".join(list(set([i.to_cmd_line() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
+
     if cond_param_command:
         combined_xml.append("\n".join(pretty_xml(cond_section_param ).split("\n")[1:]))
 
@@ -105,6 +108,9 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     if flat_command :
         combined_command.append(flat_command )
 
+    if output_command :
+        combined_command.append(output_command )
+
     print("####################################################################")
     print("Tool parameters have been extracted successfully...")
     print("####################################################################")
@@ -113,8 +119,6 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     tool_type = DEFAULT_TOOL_TYPE
     filename = r_script.split('/')[len(r_script.split('/'))-1]
     cleaned_filename = filename.lower().replace( '-', '_').replace('.r', '')
-
-    print(blankenberg_parameters.oynaxraoret_to_outputs(params))
 
     template_dict = {
         'id': cleaned_filename ,
@@ -128,7 +132,7 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
         'requirements': dependency_tag,
         'command':"\n".join(combined_command), 
         'inputs': ["\n".join(combined_xml)],
-        'outputs': blankenberg_parameters.oynaxraoret_to_outputs(params),
+        'outputs': [output_params],
         #'tests': None,
         'help': format_help(blankenberg_parameters.format_help().replace(os.path.basename(__file__), filename)),
         'doi': citation_doi.split(','),
