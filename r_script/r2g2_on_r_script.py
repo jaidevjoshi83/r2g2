@@ -53,7 +53,6 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
    
     edit_r_script(r_script, edited_r_script, json_file_name=json_out )
 
-   
     subprocess.run(['Rscript',  edited_r_script])
 
     python_code_as_string = json_to_python(json_out)
@@ -64,7 +63,6 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     exec(argument_string, globals(), param_info_dict)
 
     param_info = param_info_dict.get('param_info')
-    # param_cat = extract_simple_parser_info(param_info)
 
     print("####################################################################")
     print("Converted R arguments to Python argparse successfully...")
@@ -114,10 +112,9 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     DEFAULT_TOOL_TYPE = "test_tools"
     tool_type = DEFAULT_TOOL_TYPE
     filename = r_script.split('/')[len(r_script.split('/'))-1]
-    # print(blankenberg_parameters.oynaxraoret_to_outputs(params))
     cleaned_filename = filename.lower().replace( '-', '_').replace('.r', '')
 
-    print()
+    print(blankenberg_parameters.oynaxraoret_to_outputs(params))
 
     template_dict = {
         'id': cleaned_filename ,
