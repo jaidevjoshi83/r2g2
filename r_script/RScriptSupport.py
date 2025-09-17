@@ -17,7 +17,6 @@ import inspect
 script_path = Path(__file__).resolve().parent
 
 
-
 def pretty_xml(element):
     rough_str = ET.tostring(element, encoding="unicode")
     reparsed = minidom.parseString(rough_str)

@@ -97,7 +97,7 @@ TOOL_TEMPLATE = """<tool id="{{id}}" name="{{name}}" version="{{version}}"{{tool
     </inputs>
     <outputs>
 {%- for output in outputs %}
-        {{ output }}
+        {{ output | safe }}
 {%- endfor %}
     </outputs>
 {%- if tests %}
@@ -281,7 +281,6 @@ class Parameter( object ):
 
             )
     def to_xml_output( self ):
-
         return self
         # return """<data name=%s format="%s" %s %s label=%s/>""" % \
         # (
@@ -418,6 +417,7 @@ class ParameterFILE_PATH( Parameter ):
         if ',' in self.get_format():
             return 'format_source="input_%s"' % ( self.name )
         return ''
+
     def to_xml_output( self ):
         #print ('toxml putput', self.name, self.get_format() ) 
         return """<data name=%s format="%s" %s %s label=%s/>""" % \
@@ -1386,14 +1386,8 @@ class FakeArg( argparse_original.ArgumentParser ):
         rval = []
         for param in self.oynaxraoret_get_params( params ):
             if param.name not in SKIP_PARAMETER_NAMES and param.is_output:
-                print(param.to_xml_output())
                 rval.append( param.to_xml_output() )
 
-        # print(dir(rval[0]))
-        # print(rval[0].to_cmd_line())
-        # print(rval[0].to_xml_output())
-
-        rval.append( GALAXY_ANVIO_LOG_XML )
         return rval
 
 def format_help(help_text):
@@ -1418,7 +1412,6 @@ def build_tool00000(plink_text_version):
     tool_name = info.get('tool_name')
     plink_help_input_start = info.get('plink_help_input_start')
     plink_help_input_stop = info.get('plink_help_input_stop')
-
 
     with open(os.path.join(versioned_asset_path, 'help.txt')) as fh:
         plink_help = fh.read()
@@ -1659,9 +1652,6 @@ oynaxraoret_parameters = oynaxraoret_parsing(dict(locals()))""" % output
         #print 'anvio.D len', len(anvio.D)
         #print 'metavar len', len(unknown_metavar)
     
-
-
-
 
 if __name__ == '__main__':
     #parser = argparse_original.ArgumentParser(description='Create Galaxy Anvio tools.')

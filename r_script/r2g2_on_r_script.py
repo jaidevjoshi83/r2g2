@@ -36,8 +36,13 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     current_dir = os.getcwd()
     temp_dir = tempfile.mkdtemp(dir=current_dir)
 
-    if not os.path.exists(os.path.join(current_dir, out_dir)):
-        os.makedirs(os.path.join(current_dir, out_dir))
+    if not out_dir:
+        out_dir_path = os.path.join("../", "out")
+    else:
+        out_dir_path = out_dir
+
+    if not os.path.exists(out_dir_path):
+        os.makedirs(out_dir_path)
         
     edited_r_script  = os.path.join(temp_dir, "%s_edited.r"%(r_script.split('/')[len(r_script.split('/'))-1].split('.')[0])) 
     
@@ -146,7 +151,7 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
 
     # print(tool_xml)
 
-    with open( os.path.join ('./', out_dir, "%s.xml" % cleaned_filename ), 'w') as out:
+    with open( os.path.join (out_dir_path, "%s.xml" % cleaned_filename ), 'w') as out:
         out.write(tool_xml)
 
     if os.path.exists(temp_dir) and os.path.isdir(temp_dir):
@@ -159,7 +164,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-r', '--r_script_name', required=True, help="Provide the path of an R script... ")
-    parser.add_argument('-o', '--output_dir', required=False, default='out')
+    parser.add_argument('-o', '--output_dir', required=False, default=None)
     parser.add_argument('-p', '--profile', required=False, default="22.01")
     parser.add_argument('-d', '--description', required=False, default=None, help="tool based on R script")
     parser.add_argument('-s', '--dependencies', required=False,  default=False, help=" Extract dependency information..")
