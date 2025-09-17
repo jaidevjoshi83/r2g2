@@ -1,12 +1,13 @@
 import argparse
 import subprocess
 import tempfile
-import os
+import os, sys
 import shutil
 from r_script_to_galaxy_wrapper import *
 from dependency_generator import  return_galax_tag
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
+import time 
 
 from RScriptSupport import (
     edit_r_script,
@@ -146,24 +147,21 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
         'file_name':filename
         }
 
-
     tool_xml = Template(TOOL_TEMPLATE).render( **template_dict )
-
-    # print(tool_xml)
 
     with open( os.path.join (out_dir_path, "%s.xml" % cleaned_filename ), 'w') as out:
         out.write(tool_xml)
 
     if os.path.exists(temp_dir) and os.path.isdir(temp_dir):
         shutil.rmtree(temp_dir)
-        # print(f"Deleted directory: {temp_dir}")
     else:
         print(f"Directory does not exist: {temp_dir}")
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-r', '--r_script_name', required=True, help="Provide the path of an R script... ")
+    parser.add_argument('-r', '--r_script_name', required=False, default=None, help="Provide the path of an R script... ")
+    parser.add_argument('-f', '--r_scripts', required=False, default=None, help="A path of a text file containing full path of R scripts.")
     parser.add_argument('-o', '--output_dir', required=False, default=None)
     parser.add_argument('-p', '--profile', required=False, default="22.01")
     parser.add_argument('-d', '--description', required=False, default=None, help="tool based on R script")
@@ -173,4 +171,34 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(args.r_script_name, args.output_dir, args.profile, args.dependencies, args.description, args.tool_version, args.citation_doi)
+    if not args.r_scripts and not args.r_script_name:
+        print("\n\nPlease provide either a single Rscript or a text file containing paths to R scripts. See the details below...\n\n")
+        parser.print_help() 
+        sys.exit(1)
+        
+    if args.r_scripts:
+        file = open(args.r_scripts)
+        r_scrtips_list  = [i.strip("\n") for i in file.readlines()]
+    else:
+        r_scrtips_list = [args.r_script_name]
+
+    total_files = len(r_scrtips_list)
+
+    start_time = time.time()  # total processing start
+
+    for idx, r_spt in enumerate(r_scrtips_list, start=1):
+        file_start = time.time()
+        print(f"[{idx}/{total_files}] Processing: {r_spt} ...")
+
+        try:
+            main(r_spt, args.output_dir, args.profile, args.dependencies, args.description, args.tool_version, args.citation_doi)
+            status = "Success"
+        except Exception as e:
+            status = f"Failed ({e})"
+
+        file_end = time.time()
+        elapsed = file_end - file_start
+        print(f"[{idx}/{total_files}] Finished: {r_spt} | Status: {status} | Time taken: {elapsed:.2f}s\n")
+
+    total_elapsed = time.time() - start_time
+    print(f"All files processed. Total time: {total_elapsed:.2f}s")
