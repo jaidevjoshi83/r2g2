@@ -4,7 +4,7 @@ import tempfile
 import os, sys
 import shutil
 from r_script_to_galaxy_wrapper import *
-from dependency_generator import  return_galax_tag
+from dependency_generator import  return_galax_tag, detect_package_channel
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import time 
@@ -17,7 +17,8 @@ from RScriptSupport import (
     extract_simple_parser_info,
     #TBD: R's logical type need be handled correctly while building galaxy input params. 
     logical, 
-    pretty_xml
+    pretty_xml, 
+
 )
 
 def generate_galaxy_xml(xml_str):
@@ -33,7 +34,8 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     if not description:
         description = r_script.split('/')[len(r_script.split('/'))-1].split('.')[0] + " tool"
 
-    dependency_tag = "\n".join([return_galax_tag(i[0], i[1], dep_info) for i in return_dependencies(r_script)])
+    dependency_tag = "\n".join([return_galax_tag(*detect_package_channel(i), False) for i in return_dependencies(r_script)])
+
     current_dir = os.getcwd()
     temp_dir = tempfile.mkdtemp(dir=current_dir)
 
@@ -152,10 +154,10 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     with open( os.path.join (out_dir_path, "%s.xml" % cleaned_filename ), 'w') as out:
         out.write(tool_xml)
 
-    if os.path.exists(temp_dir) and os.path.isdir(temp_dir):
-        shutil.rmtree(temp_dir)
-    else:
-        print(f"Directory does not exist: {temp_dir}")
+    # if os.path.exists(temp_dir) and os.path.isdir(temp_dir):
+    #     shutil.rmtree(temp_dir)
+    # else:
+    #     print(f"Directory does not exist: {temp_dir}")
 
 if __name__ == '__main__':
 

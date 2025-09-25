@@ -108,7 +108,8 @@ class CustomFakeArg(FakeArg):
         for opt in spec.get("groups", {}).get("options", []):
             if opt != "--help" and "output"  not in opt:
                 parent.append(self.generate_param( opt))
-                cmd_parts.append("    " * level + f"'${full_name}.{self.clean_arg_name(opt)}'\n")
+                # print("    " * level + f"{opt}{'    '}'${full_name}.{self.clean_arg_name(opt)}'\n")
+                cmd_parts.append("    " * level + f"{opt}{'    '}'${full_name}.{self.clean_arg_name(opt)}'\n")
 
         # Nested subparsers
         if spec.get("subparsers"):
@@ -718,3 +719,15 @@ def logical(value):
         raise argparse.ArgumentTypeError(f"Invalid logical value: {value}. Only TRUE or FALSE allowed.")
 
 
+def detect_package_channel(dep):
+    for n in ['bioconda', 'conda-forge']:
+        if n=='bioconda':
+            if check_package(n, 'bioconductor-'+dep[0].lower()):
+                return 'bioconductor-'+dep[0].lower(), dep[1]
+            else:
+                return dep[0].lower(), dep[1]
+        elif n == 'conda-forge':
+            if check_package(n, 'r-'+dep[0].lower()):
+                return 'r-'+dep[0].lower(), dep[1]
+            else:
+                dep[0].lower(), dep[1]
