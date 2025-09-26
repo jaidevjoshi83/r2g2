@@ -3,6 +3,8 @@ suppressPackageStartupMessages({
   library(argparse)
   library(DEP)
   library(dplyr)
+  library(ggplot2)
+  library(grid)
 })
 
 parser <- ArgumentParser(description = "DEP CSV pipeline with subcommands")
@@ -17,17 +19,21 @@ subparsers <- parser$add_subparsers(dest = "workflow", help = "Choose workflow: 
 
 # LFQ subparser
 parser_lfq <- subparsers$add_parser("LFQ", help = "Run LFQ pipeline (CSV input)")
-parser_lfq$add_argument("--lfq-csv", required=TRUE, help = "Path to LFQ CSV file")
+parser_lfq$add_argument("--lfq-csv", required=TRUE, type = 'character', help = "Path to LFQ CSV file")
 parser_lfq$add_argument("--skip", type = "integer", default = 2, help = "Number of header lines to skip when reading CSV")
-parser_lfq$add_argument("--id-col", default = "Protein", help = "Column name for protein name (for make_unique)")
-parser_lfq$add_argument("--acc-col", default = "Accession", help = "Column name for accession (for make_unique)")
-parser_lfq$add_argument("--lfq-regex", default = '^Lane\\.(?!.*_nor)', help = "Perl regex to select LFQ columns")
-parser_lfq$add_argument("--design-csv", required=TRUE, help = "Path to experimental design CSV (label,condition,replicate)")
-parser_lfq$add_argument("--impute", choices = c('MinProb','man','knn','QRILC','none'), default = 'MinProb', help = "Imputation method to use")
+parser_lfq$add_argument("--id-col", default = "Protein", type = 'character', help = "Column name for protein name (for make_unique)")
+parser_lfq$add_argument("--acc-col", default = "Accession", type = 'character', help = "Column name for accession (for make_unique)")
+parser_lfq$add_argument("--lfq-regex", default = '^Lane\\.(?!.*_nor)', type = 'character', help = "Perl regex to select LFQ columns")
+parser_lfq$add_argument("--design-csv", required=TRUE, type = 'character', help = "Path to experimental design CSV (label,condition,replicate)")
+parser_lfq$add_argument("--impute", choices = c('MinProb','man','knn','QRILC','none'), default = 'MinProb', type = 'character', help = "Imputation method to use")
 parser_lfq$add_argument("--man-shift", type = "double", default = 1.8, help = "Shift for manual imputation (when --impute man)")
 parser_lfq$add_argument("--man-scale", type = "double", default = 0.3, help = "Scale for manual imputation (when --impute man)")
 parser_lfq$add_argument("--rowmax", type = "double", default = 0.9, help = "rowmax for KNN imputation")
-parser_lfq$add_argument("--control", default = "Positive", help = "Control condition name used by test_diff")
+parser_lfq$add_argument("--control", default = "Positive", type = 'character', help = "Control condition name used by test_diff")
+parser_lfq$add_argument("--plots", default = "", type = 'character', help = "Comma-separated list of plots to generate (numbers,coverage,missval,pca,correlation,heatmap,volcano,all)")
+parser_lfq$add_argument("--plots-format", default = "png", choices = c("png","pdf"), type = 'character', help = "Output format for plots (png or pdf)")
+parser_lfq$add_argument("--plots-dir", default = NULL, type = 'character', help = "Directory to save plots (default: <output-prefix>_plots)")
+parser_lfq$add_argument("--volcano-contrast", default = "all", type = 'character', help = "Contrast for volcano plot (name or 'all')")
 
 # TMT subparser (placeholder for future)
 parser_tmt <- subparsers$add_parser("TMT", help = "Run TMT pipeline (not yet implemented)")
@@ -104,6 +110,137 @@ if (args$workflow == 'LFQ') {
   write.csv(df_long, file = paste0(args$output_prefix, '_df_long.csv'), row.names = FALSE)
 
   cat('Done. Outputs written with prefix:', args$output_prefix, '\n')
+
+  # Plot generation section -------------------------------------------------
+  if (nzchar(args$plots)) {
+    cat('Plot generation requested for:', args$plots, '\n')
+    plots_dir <- ifelse(is.null(args$plots_dir) || args$plots_dir == '', paste0(args$output_prefix, '_plots'), args$plots_dir)
+    if (!dir.exists(plots_dir)) dir.create(plots_dir, recursive = TRUE)
+
+    # Helper to parse list
+    raw_plots <- tolower(trimws(unlist(strsplit(args$plots, ','))))
+    if (length(raw_plots) == 0) raw_plots <- character(0)
+    all_plot_keys <- c('numbers','coverage','missval','pca','correlation','heatmap','volcano')
+    if ('all' %in% raw_plots) {
+      selected_plots <- all_plot_keys
+    } else {
+      unknown <- setdiff(raw_plots, all_plot_keys)
+      if (length(unknown) > 0) {
+        warning('Unknown plot keys ignored: ', paste(unknown, collapse = ', '))
+      }
+      selected_plots <- intersect(raw_plots, all_plot_keys)
+    }
+
+    if (length(selected_plots) == 0) {
+      cat('No valid plots selected, skipping plot generation.\n')
+    } else {
+      cat('Generating plots:', paste(selected_plots, collapse = ', '), '\n')
+
+      # Re-use intermediate objects: data_se, data_filt, data_norm, data_imp, dep
+      # Convenience saver
+      save_plot_obj <- function(p, filename_root) {
+        file <- file.path(plots_dir, paste0(filename_root, '.', args$plots_format))
+        ext <- args$plots_format
+        if (inherits(p, 'gg') || inherits(p, 'ggplot')) {
+          ggsave(filename = file, plot = p, device = ext)
+        } else if (inherits(p, 'gtable') || 'gtable' %in% class(p)) {
+          if (ext == 'pdf') {
+            pdf(file)
+            grid::grid.draw(p)
+            dev.off()
+          } else {
+            png(file)
+            grid::grid.draw(p)
+            dev.off()
+          }
+        } else if (is.list(p) && !is.null(p$gtable)) { # pheatmap style object
+          gt <- p$gtable
+          if (ext == 'pdf') {
+            pdf(file)
+            grid::grid.draw(gt)
+            dev.off()
+          } else {
+            png(file)
+            grid::grid.draw(gt)
+            dev.off()
+          }
+        } else {
+          warning('Unrecognized plot object class: ', paste(class(p), collapse = '/'))
+        }
+      }
+
+      # numbers (proteins per sample)
+      if ('numbers' %in% selected_plots) {
+        cat('Generating plot_numbers...\n')
+        p <- try(plot_numbers(data_filt), silent = TRUE)
+        if (!inherits(p, 'try-error')) save_plot_obj(p, 'plot_numbers') else warning('Failed to generate plot_numbers')
+      }
+      # coverage
+      if ('coverage' %in% selected_plots) {
+        cat('Generating plot_coverage...\n')
+        p <- try(plot_coverage(data_se), silent = TRUE)
+        if (!inherits(p, 'try-error')) save_plot_obj(p, 'plot_coverage') else warning('Failed to generate plot_coverage')
+      }
+      # missing value pattern
+      if ('missval' %in% selected_plots) {
+        cat('Generating plot_missval...\n')
+        p <- try(plot_missval(data_se), silent = TRUE)
+        if (!inherits(p, 'try-error')) save_plot_obj(p, 'plot_missval_raw') else warning('Failed (raw) plot_missval')
+        p2 <- try(plot_missval(data_filt), silent = TRUE)
+        if (!inherits(p2, 'try-error')) save_plot_obj(p2, 'plot_missval_filtered')
+      }
+      # PCA
+      if ('pca' %in% selected_plots) {
+        cat('Generating plot_pca...\n')
+        p <- try(plot_pca(data_imp, x = 1, y = 2, n = 500), silent = TRUE)
+        if (!inherits(p, 'try-error')) save_plot_obj(p, 'plot_pca') else warning('Failed to generate plot_pca')
+      }
+      # correlation matrix
+      if ('correlation' %in% selected_plots) {
+        cat('Generating plot_correlation...\n')
+        p <- try(plot_correlation(data_imp), silent = TRUE)
+        if (!inherits(p, 'try-error')) save_plot_obj(p, 'plot_correlation') else warning('Failed to generate plot_correlation')
+      }
+      # heatmap clustering
+      if ('heatmap' %in% selected_plots) {
+        cat('Generating plot_heatmap...\n')
+        p <- try(plot_heatmap(dep), silent = TRUE)
+        if (!inherits(p, 'try-error')) save_plot_obj(p, 'plot_heatmap') else warning('Failed to generate plot_heatmap')
+      }
+      # volcano plots (may be multiple contrasts)
+      if ('volcano' %in% selected_plots) {
+        cat('Generating plot_volcano...\n')
+        # Attempt to detect contrasts
+        results_cols <- try(get_results(dep), silent = TRUE)
+        contrasts <- character(0)
+        if (!inherits(results_cols, 'try-error') && 'contrast' %in% colnames(results_cols)) {
+          contrasts <- unique(results_cols$contrast)
+        }
+        if (length(contrasts) == 0 && !is.null(dep@results) && 'contrast' %in% names(dep@results)) {
+          # fallback (likely not needed)
+          contrasts <- unique(dep@results$contrast)
+        }
+        if (args$volcano_contrast != 'all') {
+          if (args$volcano_contrast %in% contrasts) {
+            contrasts <- args$volcano_contrast
+          } else {
+            warning('Requested volcano contrast not found: ', args$volcano_contrast, '; using all detected.')
+          }
+        }
+        if (length(contrasts) == 0) {
+          warning('No contrasts detected for volcano plotting')
+        } else {
+          for (ct in contrasts) {
+            cat('  Volcano for contrast:', ct, '\n')
+            p <- try(plot_volcano(dep, contrast = ct), silent = TRUE)
+            if (!inherits(p, 'try-error')) save_plot_obj(p, paste0('plot_volcano_', gsub('[^A-Za-z0-9._-]+','_', ct))) else warning('Failed volcano plot for contrast ', ct)
+          }
+        }
+      }
+
+      cat('Plot generation completed. Files in: ', plots_dir, '\n')
+    }
+  }
 
 } else if (args$workflow == 'TMT') {
   stop('TMT workflow is not implemented yet — use LFQ subcommand')
