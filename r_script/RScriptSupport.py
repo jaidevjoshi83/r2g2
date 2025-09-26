@@ -33,9 +33,9 @@ class CustomFakeArg(FakeArg):
         """Helper to wrap inner block in a properly indented ##if block."""
         indent = "        " * level
         return (
-            f"{indent}{indent}#if {condition}\n"
-            f"{inner}{indent}\n"
-            f"{indent}{indent}#end if"
+            f"{indent}{'\t\t\t\t'}#if {condition}\n"
+            f"{inner}{'\t\t\t\t'}\n"
+            f"{indent}{'\t\t\t\t'}#end if"
         )
 
     def dict_to_xml_and_command(self, spec, parent=None, subparser_name=None,
@@ -56,7 +56,7 @@ class CustomFakeArg(FakeArg):
                 ET.SubElement(param, "option", value=sp).text = sp
             
             cmd_parts.append(
-                f"'${'top_subparser.subparser_selector'}'"
+                f"    '${'top_subparser.subparser_selector'}'"
             )
                 
 
@@ -114,7 +114,7 @@ class CustomFakeArg(FakeArg):
             if opt != "--help" and "output"  not in opt:
                 parent.append(self.generate_param( opt))
                 # print("    " * level + f"{opt}{'    '}'${full_name}.{self.clean_arg_name(opt)}'\n")
-                cmd_parts.append("    " * level + f"{opt}{'    '}'${full_name}.{self.clean_arg_name(opt)}'\n")
+                cmd_parts.append("            " * level + f"{opt}{'    '}'${full_name}.{self.clean_arg_name(opt)}'\n")
 
         # Nested subparsers
         if spec.get("subparsers"):
