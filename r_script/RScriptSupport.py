@@ -31,11 +31,11 @@ class CustomFakeArg(FakeArg):
 
     def format_block(self, condition, inner, level):
         """Helper to wrap inner block in a properly indented ##if block."""
-        indent = "    " * level
+        indent = "        " * level
         return (
-            f"{indent}#if {condition}\n"
-            f"{inner}\n"
-            f"{indent}#end if"
+            f"{indent}{indent}#if {condition}\n"
+            f"{inner}{indent}\n"
+            f"{indent}{indent}#end if"
         )
 
     def dict_to_xml_and_command(self, spec, parent=None, subparser_name=None,
@@ -54,6 +54,11 @@ class CustomFakeArg(FakeArg):
                                 type="select", label="Select analysis type")
             for sp in spec.get("subparsers", {}):
                 ET.SubElement(param, "option", value=sp).text = sp
+            
+            cmd_parts.append(
+                f"'${'top_subparser.subparser_selector'}'"
+            )
+                
 
             for sp, sp_spec in spec.get("subparsers", {}).items():
                 when = ET.SubElement(cond, "when", value=sp)

@@ -270,17 +270,42 @@ class Parameter( object ):
             return 'False'
         return 'True'
     def to_xml_param( self ):
-        return """<param name=%s type="%s" label=%s value=%s optional="%s" argument=%s help=%s/>""" % \
-            (
-                quoteattr( self.get_input_cmd_name() ), 
-                self.get_type(),  
-                self.get_label(), 
-                self.get_default(), 
-                self.get_optional(),
-                self.get_argument(), 
-                self.get_help(),
-
+        choices = self.info_dict.get('choices')
+        if choices and isinstance(choices, (list, tuple)) and len(choices) > 0:
+            default_raw = self.info_dict.get('default')
+            # Build <option> tags
+            option_lines = []
+            for ch in choices:
+                ch_str = str(ch)
+                selected_attr = ''
+                if default_raw is not None and str(default_raw) == ch_str:
+                    selected_attr = ' selected="true"'
+                option_lines.append(
+                    "            <option value=%s%s>%s</option>" % (
+                        quoteattr(ch_str), selected_attr, ch_str
+                    )
+                )
+            options_block = "\n".join(option_lines)
+            return (
+                "<param name=%s type=\"select\" label=%s optional=\"%s\" argument=%s help=%s>\n" % (
+                    quoteattr(self.get_input_cmd_name()),
+                    self.get_label(),
+                    self.get_optional(),
+                    self.get_argument(),
+                    self.get_help(),
+                )
+                + options_block + "\n        </param>"
             )
+        # Fallback: original single-value parameter
+        return """<param name=%s type="%s" label=%s value=%s optional="%s" argument=%s help=%s/>""" % (
+            quoteattr( self.get_input_cmd_name() ), 
+            self.get_type(),  
+            self.get_label(), 
+            self.get_default(), 
+            self.get_optional(),
+            self.get_argument(), 
+            self.get_help(),
+        )
     def to_xml_output( self ):
         return self
         # return """<data name=%s format="%s" %s %s label=%s/>""" % \
