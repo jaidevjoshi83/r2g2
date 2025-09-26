@@ -3,11 +3,13 @@ import subprocess
 import tempfile
 import os, sys
 import shutil
-from r_script_to_galaxy_wrapper import *
+from r_script_to_galaxy_wrapper import TOOL_TEMPLATE
 from dependency_generator import  return_galax_tag, detect_package_channel
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import time 
+from anvio import format_help, galaxy_tool_citation
+from jinja2 import Template
 
 from RScriptSupport import (
     edit_r_script,
@@ -151,13 +153,15 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
 
     tool_xml = Template(TOOL_TEMPLATE).render( **template_dict )
 
+    print("xml wrapper generated", os.path.join (out_dir_path, "%s.xml" % cleaned_filename ))
+
     with open( os.path.join (out_dir_path, "%s.xml" % cleaned_filename ), 'w') as out:
         out.write(tool_xml)
 
-    # if os.path.exists(temp_dir) and os.path.isdir(temp_dir):
-    #     shutil.rmtree(temp_dir)
-    # else:
-    #     print(f"Directory does not exist: {temp_dir}")
+    if os.path.exists(temp_dir) and os.path.isdir(temp_dir):
+        shutil.rmtree(temp_dir)
+    else:
+        print(f"Directory does not exist: {temp_dir}")
 
 if __name__ == '__main__':
 

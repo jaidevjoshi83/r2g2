@@ -717,17 +717,3 @@ def logical(value):
         return False
     else:
         raise argparse.ArgumentTypeError(f"Invalid logical value: {value}. Only TRUE or FALSE allowed.")
-
-
-def detect_package_channel(dep):
-    for n in ['bioconda', 'conda-forge']:
-        if n=='bioconda':
-            if check_package(n, 'bioconductor-'+dep[0].lower()):
-                return 'bioconductor-'+dep[0].lower(), dep[1]
-            else:
-                return dep[0].lower(), dep[1]
-        elif n == 'conda-forge':
-            if check_package(n, 'r-'+dep[0].lower()):
-                return 'r-'+dep[0].lower(), dep[1]
-            else:
-                dep[0].lower(), dep[1]

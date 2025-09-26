@@ -6,6 +6,7 @@
 
 import argparse as argparse_original
 import sys
+import json
 import os
 from collections import OrderedDict
 from xml.sax.saxutils import quoteattr
@@ -1193,8 +1194,6 @@ PARAMETER_BY_METAVAR = {
     'FASTA_FILE': ParameterFASTA,
     'FASTQ_FILES': ParameterFASTQ,
     'CONTIG DATABASE(S)': ParameterContigsDB,
-
-
     'IP_ADDR': ParameterDiscard,
     'DATABASE_PATH': ParameterUnknownDB,
 }
@@ -1255,15 +1254,58 @@ def get_parameter( param_name, arg_short, arg_long, info_dict ):
         # print("############")
         # param = ParameterBoolean
     else:
-        metavar = info_dict.get( 'metavar' )
-        # print("metavar is dan: %s, %s, %s" % ( param_name, metavar, info_dict ) )
-        if metavar is None:
-            # print("metavar is None: %s, %s" % ( param_name, metavar ) )
-            pass
-        elif metavar not in PARAMETER_BY_METAVAR:
-            # print("metavar not defined for: %s, %s" % ( param_name, metavar ) )
-            pass
-        param = PARAMETER_BY_METAVAR.get( metavar, DEFAULT_PARAMETER )
+        # Prefer explicit Python argparse 'type' when available (e.g., int/float)
+        ptype = info_dict.get('type')
+        param = None
+        if ptype is not None:
+            # Handle both callable types (int/float) and string descriptors
+            try:
+                # Some callables may not be directly comparable; stringify as fallback
+                if ptype is int or (isinstance(ptype, str) and ptype.lower() in ('int', 'integer')):
+                    param = ParameterINT
+                elif ptype is float or (isinstance(ptype, str) and ptype.lower() in ('float', 'double', 'numeric')):
+                    param = ParameterFLOAT
+            except Exception:
+                # Fallback to string-based checks
+                if isinstance(ptype, str):
+                    low = ptype.lower()
+                    if low in ('int', 'integer'):
+                        param = ParameterINT
+                    elif low in ('float', 'double', 'numeric'):
+                        param = ParameterFLOAT
+
+        # If 'type' didn't resolve it, try metavar-based mapping
+        if param is None:
+            metavar = info_dict.get( 'metavar' )
+            # print("metavar is dan: %s, %s, %s" % ( param_name, metavar, info_dict ) )
+            if metavar is None:
+                pass
+            elif metavar not in PARAMETER_BY_METAVAR:
+                pass
+            param = PARAMETER_BY_METAVAR.get( metavar, DEFAULT_PARAMETER )
+
+        # # Heuristic: infer file-based parameters to map to Galaxy 'data' types
+        # if param is DEFAULT_PARAMETER or param is None:
+        #     name_l = (param_name or '').lower()
+        #     long_l = (arg_long or '').lower()
+        #     help_l = str(info_dict.get('help', '') or '').lower()
+
+        #     text = ' '.join([name_l, long_l, help_l])
+
+        #     # Specific datatype hints
+        #     if any(k in text for k in ['.fasta', ' fasta', 'fa ', 'fa.gz', 'fna', 'fasta']):
+        #         param = ParameterFASTA
+        #     elif any(k in text for k in ['.fastq', ' fastq', 'fq ', 'fq.gz', 'fastq']):
+        #         param = ParameterFASTQ
+        #     elif any(k in text for k in ['newick', '.nwk', '.tree']):
+        #         param = ParameterNEWICK
+        #     # Tabular-like
+        #     elif any(k in text for k in ['.csv', ' csv', 'comma-separated', 'tsv', '.tsv', 'tab-delimited', 'tab separated', 'table']):
+        #         param = ParameterTABULAR
+        #     # Generic file/path cues
+        #     elif any(k in text for k in [' file', ' filepath', ' file path', ' path', 'input ', 'input_', 'output file', 'output_path']):
+        #         param = ParameterFILE_PATH
+        #     # If still nothing matched, leave as default
     return param( param_name, arg_short, arg_long, info_dict )
 
 class FakeArg( argparse_original.ArgumentParser ):
