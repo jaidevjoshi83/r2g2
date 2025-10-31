@@ -129,7 +129,12 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     tool_type = DEFAULT_TOOL_TYPE
     filename = r_script.split('/')[len(r_script.split('/'))-1]
     cleaned_filename = filename.lower().replace( '-', '_').replace('.r', '')
-
+    try:
+        formated_string = format_help(blankenberg_parameters.format_help().replace(os.path.basename(__file__), filename))
+    except Exception as e:
+        print(f"Error formatting help: {e}")    
+        formated_string = " No help available."
+        
     template_dict = {
         'id': cleaned_filename ,
         'tool_type': tool_type,
@@ -144,7 +149,7 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
         'inputs': ["\n".join(combined_xml)],
         'outputs': [output_params],
         #'tests': None,
-        'help': format_help(blankenberg_parameters.format_help().replace(os.path.basename(__file__), filename)),
+        'help': formated_string,
         'doi': citation_doi.split(','),
         'bibtex_citations': galaxy_tool_citation,
         'bibtex_citations': '',
