@@ -20,7 +20,6 @@ from RScriptSupport import (
     #TBD: R's logical type need be handled correctly while building galaxy input params. 
     logical, 
     pretty_xml, 
-
 )
 
 def generate_galaxy_xml(xml_str):
@@ -93,21 +92,21 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     blankenberg_parameters = local_dict.get('blankenberg_parameters')
     blankenberg_parameters.param_cat = extract_simple_parser_info(param_info)
 
+    flat_param, flat_command = blankenberg_parameters.flat_param_groups(blankenberg_parameters.param_cat )
     cond_section_param, cond_param_command =  blankenberg_parameters.dict_to_xml_and_command(   blankenberg_parameters.param_cat )
     mut_input_param, mut_command = blankenberg_parameters.mutual_conditional(blankenberg_parameters.param_cat )
-    flat_param, flat_command = blankenberg_parameters.flat_param_groups(blankenberg_parameters.param_cat )
-
+  
     output_params  = "\n".join(list(set([i.to_xml_param() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
     output_command  = "\n".join(list(set([i.to_cmd_line() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
+
+    if flat_param:
+        combined_xml.append(flat_param)
 
     if cond_param_command:
         combined_xml.append("\n".join(pretty_xml(cond_section_param ).split("\n")[1:]))
 
     if mut_input_param:
         combined_xml.append(mut_input_param)
-
-    if flat_param:
-        combined_xml.append(flat_param)
 
     if cond_param_command:
         combined_command.append(cond_param_command)   

@@ -9,13 +9,11 @@ from xml.dom import minidom
 from anvio import FakeArg, SKIP_PARAMETER_NAMES 
 from pathlib import Path
 import re
-
 import functools
 import inspect
 
 # Absolute path to the script file
 script_path = Path(__file__).resolve().parent
-
 
 def pretty_xml(element):
     rough_str = ET.tostring(element, encoding="unicode")
@@ -33,9 +31,9 @@ class CustomFakeArg(FakeArg):
         """Helper to wrap inner block in a properly indented ##if block."""
         indent = "        " * level
         return (
-            f"{indent}{'\t\t\t\t'}#if {condition}\n"
-            f"{inner}{'\t\t\t\t'}\n"
-            f"{indent}{'\t\t\t\t'}#end if"
+            f"{indent}{'\t\t\t\t\t'}#if {condition}\n"
+            f"{inner}{'\t\t\t\t\t'}\n"
+            f"{indent}{'\t\t\t\t\t'}#end if\n"
         )
 
     def dict_to_xml_and_command(self, spec, parent=None, subparser_name=None,
@@ -56,10 +54,9 @@ class CustomFakeArg(FakeArg):
                 ET.SubElement(param, "option", value=sp).text = sp
             
             cmd_parts.append(
-                f"    '${'top_subparser.subparser_selector'}'"
+                f"\n\t\t\t\t\t${'top_subparser.subparser_selector'}\n"
             )
                 
-
             for sp, sp_spec in spec.get("subparsers", {}).items():
                 when = ET.SubElement(cond, "when", value=sp)
 
@@ -74,9 +71,11 @@ class CustomFakeArg(FakeArg):
                     when.append(xml_child)
 
                 cmd_parts.append(
-                    self.format_block(f"'${'top_subparser.subparser_selector'}' == '{sp}'",
+                    self.format_block(f"${'top_subparser.subparser_selector'} == '{sp}'",
                                 cmd_child, 0)
                 )
+
+            print(cond, "\n".join(cmd_parts))
 
             return cond, "\n".join(cmd_parts)
 
@@ -113,8 +112,8 @@ class CustomFakeArg(FakeArg):
         for opt in spec.get("groups", {}).get("options", []):
             if opt != "--help" and "output"  not in opt:
                 parent.append(self.generate_param( opt))
-                # print("    " * level + f"{opt}{'    '}'${full_name}.{self.clean_arg_name(opt)}'\n")
-                cmd_parts.append("            " * level + f"{opt}{'    '}'${full_name}.{self.clean_arg_name(opt)}'\n")
+                print("            " * level + f"{opt}{' '}'${full_name}.{self.clean_arg_name(opt)}'\n")
+                cmd_parts.append("\t\t\t\t\t\t\t" * level + f"{opt}{' '}'${full_name}.{self.clean_arg_name(opt)}'")
 
         # Nested subparsers
         if spec.get("subparsers"):
@@ -142,7 +141,7 @@ class CustomFakeArg(FakeArg):
                     when_nested.append(xml_child)
                 inner_cmds.append(
                     self.format_block(
-                        f"'${{{full_name}.{subparser_name}_subparser.{subparser_name}_subparser_selector}}' == '{sp}'",
+                        f"${{{full_name}.{subparser_name}_subparser.{subparser_name}_subparser_selector}} == '{sp}'",
                         cmd_child, level+1
                     )
                 )

@@ -49,7 +49,7 @@ TOOL_TEMPLATE = """<tool id="{{id}}" name="{{name}}" version="{{version}}" profi
 {%- endif %}
 {%- endif %}
     <command><![CDATA[ 
-                Rscript '$__tool_directory__/{{file_name}}'
+        Rscript '$__tool_directory__/{{file_name}}'
 {%- if command %}
     {{ command }}
 {%- else %}
