@@ -93,14 +93,25 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     blankenberg_parameters.param_cat = extract_simple_parser_info(param_info)
 
     flat_param, flat_command = blankenberg_parameters.flat_param_groups(blankenberg_parameters.param_cat )
-    cond_section_param, cond_param_command =  blankenberg_parameters.dict_to_xml_and_command(   blankenberg_parameters.param_cat )
+
+    if not blankenberg_parameters.param_cat['subparsers']:
+        cond_section_param, cond_param_command = None, None
+    else:
+        cond_section_param, cond_param_command =  blankenberg_parameters.dict_to_xml_and_command(   blankenberg_parameters.param_cat )
+
     mut_input_param, mut_command = blankenberg_parameters.mutual_conditional(blankenberg_parameters.param_cat )
   
     output_params  = "\n".join(list(set([i.to_xml_param() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
-    output_command  = "\n".join(list(set([i.to_cmd_line() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
+    output_command  = "\t\t\t\t\t".join(list(set([i.to_cmd_line() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
 
+    if flat_command :
+        combined_command.append(flat_command )
+    
     if flat_param:
         combined_xml.append(flat_param)
+
+    if output_command :
+        combined_command.append(output_command )
 
     if cond_param_command:
         combined_xml.append("\n".join(pretty_xml(cond_section_param ).split("\n")[1:]))
@@ -114,11 +125,8 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     if  mut_command:
         combined_command.append( mut_command)
 
-    if flat_command :
-        combined_command.append(flat_command )
 
-    if output_command :
-        combined_command.append(output_command )
+
 
     print("####################################################################")
     print("Tool parameters have been extracted successfully...")

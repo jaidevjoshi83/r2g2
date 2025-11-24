@@ -9,7 +9,7 @@ from xml.dom import minidom
 from anvio import FakeArg, SKIP_PARAMETER_NAMES 
 from pathlib import Path
 import re
-import functools
+import functools            
 import inspect
 
 # Absolute path to the script file
@@ -46,13 +46,15 @@ class CustomFakeArg(FakeArg):
         """
         cmd_parts = []
 
+
         if first:
             cond = ET.Element("conditional", name="top_subparser")
             param = ET.SubElement(cond, "param", name="subparser_selector",
                                 type="select", label="Select analysis type")
             for sp in spec.get("subparsers", {}):
                 ET.SubElement(param, "option", value=sp).text = sp
-            
+
+
             cmd_parts.append(
                 f"\n\t\t\t\t\t${'top_subparser.subparser_selector'}\n"
             )
@@ -74,8 +76,6 @@ class CustomFakeArg(FakeArg):
                     self.format_block(f"${'top_subparser.subparser_selector'} == '{sp}'",
                                 cmd_child, 0)
                 )
-
-            print(cond, "\n".join(cmd_parts))
 
             return cond, "\n".join(cmd_parts)
 
@@ -112,7 +112,7 @@ class CustomFakeArg(FakeArg):
         for opt in spec.get("groups", {}).get("options", []):
             if opt != "--help" and "output"  not in opt:
                 parent.append(self.generate_param( opt))
-                print("            " * level + f"{opt}{' '}'${full_name}.{self.clean_arg_name(opt)}'\n")
+                # print("            " * level + f"{opt}{' '}'${full_name}.{self.clean_arg_name(opt)}'\n")
                 cmd_parts.append("\t\t\t\t\t\t\t" * level + f"{opt}{' '}'${full_name}.{self.clean_arg_name(opt)}'")
 
         # Nested subparsers
@@ -193,7 +193,7 @@ class CustomFakeArg(FakeArg):
                 if item != "--help" and "output"  not in item:
                     param, command = self.generate_param( item, flat=True)
                     param_list.append("\n".join(pretty_xml(param).split("\n")[1:]))
-                    command_list.append(command)
+                    command_list.append("\t\t\t"+command)
         return "\n".join(param_list),  "\n".join(command_list)
                 
     def groups_params(self):
