@@ -6,16 +6,14 @@ from rpy2.robjects.packages import PackageNotInstalledError
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 # from r_script_to_galaxy_wrapper import FakeArg
-from anvio import FakeArg, SKIP_PARAMETER_NAMES 
+from r2g2.anvio import FakeArg, SKIP_PARAMETER_NAMES 
 from pathlib import Path
 import re
-
-import functools
+import functools            
 import inspect
 
 # Absolute path to the script file
 script_path = Path(__file__).resolve().parent
-
 
 def pretty_xml(element):
     rough_str = ET.tostring(element, encoding="unicode")
@@ -31,11 +29,11 @@ class CustomFakeArg(FakeArg):
 
     def format_block(self, condition, inner, level):
         """Helper to wrap inner block in a properly indented ##if block."""
-        indent = "    " * level
+        indent = "        " * level
         return (
-            f"{indent}#if {condition}\n"
-            f"{inner}\n"
-            f"{indent}#end if"
+            f"{indent}{'\t\t\t\t\t'}#if {condition}\n"
+            f"{inner}{'\t\t\t\t\t'}\n"
+            f"{indent}{'\t\t\t\t\t'}#end if\n"
         )
 
     def dict_to_xml_and_command(self, spec, parent=None, subparser_name=None,
@@ -48,6 +46,7 @@ class CustomFakeArg(FakeArg):
         """
         cmd_parts = []
 
+
         if first:
             cond = ET.Element("conditional", name="top_subparser")
             param = ET.SubElement(cond, "param", name="subparser_selector",
@@ -55,6 +54,11 @@ class CustomFakeArg(FakeArg):
             for sp in spec.get("subparsers", {}):
                 ET.SubElement(param, "option", value=sp).text = sp
 
+
+            cmd_parts.append(
+                f"\n\t\t\t\t\t${'top_subparser.subparser_selector'}\n"
+            )
+                
             for sp, sp_spec in spec.get("subparsers", {}).items():
                 when = ET.SubElement(cond, "when", value=sp)
 
@@ -69,7 +73,7 @@ class CustomFakeArg(FakeArg):
                     when.append(xml_child)
 
                 cmd_parts.append(
-                    self.format_block(f"'${'top_subparser.subparser_selector'}' == '{sp}'",
+                    self.format_block(f"${'top_subparser.subparser_selector'} == '{sp}'",
                                 cmd_child, 0)
                 )
 
@@ -108,7 +112,8 @@ class CustomFakeArg(FakeArg):
         for opt in spec.get("groups", {}).get("options", []):
             if opt != "--help" and "output"  not in opt:
                 parent.append(self.generate_param( opt))
-                cmd_parts.append("    " * level + f"'${full_name}.{self.clean_arg_name(opt)}'\n")
+                # print("            " * level + f"{opt}{' '}'${full_name}.{self.clean_arg_name(opt)}'\n")
+                cmd_parts.append("\t\t\t\t\t\t\t" * level + f"{opt}{' '}'${full_name}.{self.clean_arg_name(opt)}'")
 
         # Nested subparsers
         if spec.get("subparsers"):
@@ -136,7 +141,7 @@ class CustomFakeArg(FakeArg):
                     when_nested.append(xml_child)
                 inner_cmds.append(
                     self.format_block(
-                        f"'${{{full_name}.{subparser_name}_subparser.{subparser_name}_subparser_selector}}' == '{sp}'",
+                        f"${{{full_name}.{subparser_name}_subparser.{subparser_name}_subparser_selector}} == '{sp}'",
                         cmd_child, level+1
                     )
                 )
@@ -188,7 +193,7 @@ class CustomFakeArg(FakeArg):
                 if item != "--help" and "output"  not in item:
                     param, command = self.generate_param( item, flat=True)
                     param_list.append("\n".join(pretty_xml(param).split("\n")[1:]))
-                    command_list.append(command)
+                    command_list.append("\t\t\t"+command)
         return "\n".join(param_list),  "\n".join(command_list)
                 
     def groups_params(self):
@@ -519,7 +524,7 @@ def json_to_python(json_file):
     arg_str_function = f"""
 #!/usr/bin/env python
 # from r_script_to_galaxy_wrapper import FakeArg
-from RScriptSupport import CustomFakeArg
+from r2g2.parsers.r_parser import CustomFakeArg
 import json
 import argparse
 
@@ -716,5 +721,3 @@ def logical(value):
         return False
     else:
         raise argparse.ArgumentTypeError(f"Invalid logical value: {value}. Only TRUE or FALSE allowed.")
-
-

@@ -49,7 +49,7 @@ TOOL_TEMPLATE = """<tool id="{{id}}" name="{{name}}" version="{{version}}" profi
 {%- endif %}
 {%- endif %}
     <command><![CDATA[ 
-                Rscript '$__tool_directory__/{{file_name}}'
+        Rscript '$__tool_directory__/{{file_name}}'
 {%- if command %}
     {{ command }}
 {%- else %}
@@ -463,118 +463,118 @@ class ParameterPROFILE( ParameterFILE_PATH ):
             text = cmd_text
         return text
 
-class ParameterUnknownDB( ParameterFILE_PATH ):
-    #TODO: should we copy the inputs to to outputs?
-    def __init__( self, *args, **kwd ):
-        super( ParameterUnknownDB, self ).__init__( *args, **kwd )
-        self.is_output = True
-        self.is_input = not self.name.startswith( self._output_startswith )
-        #self.basename='PROFILE'
-    def get_format( self ):
-        return "anvio_db"
-    def get_output_cmd_name(self):
-        if self.is_input:
-            return "output_%s" % self.name
-        else:
-            return self.name
-    def get_input_cmd_name(self):
-        if self.is_output:
-            return "input_%s" % self.name
-        else:
-            return self.name
-    def get_base_filename(self, multiple=False):
-        if multiple:
-            return "${gxy_%s.metadata.anvio_basename}" % self.get_output_cmd_name()
-        return "${%s.metadata.anvio_basename}" % self.get_output_cmd_name()
-    def to_cmd_line( self ):
-        text = ''
-        if self.multiple:
-            cmd_text = """
-            #for $gxy_%s in $%s:
-                %s "${gxy_%s.extra_files_path}/%s"
-            #end for
-            """ % ( self.get_output_cmd_name(), self.get_output_cmd_name(), self.get_arg_text(), self.get_output_cmd_name(), self.get_base_filename(multiple=True) ) #( self.name, self.name, self.get_arg_text(), self.name, self.name )
-        else:
-            cmd_text = "%s '${%s.extra_files_path}/%s'" % ( self.get_arg_text(), self.get_output_cmd_name(), self.get_base_filename() )
-        if not self.multiple:
-            text = """
-#if $%s:
-    %s
-#end if\n""" % ( self.get_output_cmd_name(), cmd_text )
-        else:
-            text = cmd_text
-        return text
+# class ParameterUnknownDB( ParameterFILE_PATH ):
+#     #TODO: should we copy the inputs to to outputs?
+#     def __init__( self, *args, **kwd ):
+#         super( ParameterUnknownDB, self ).__init__( *args, **kwd )
+#         self.is_output = True
+#         self.is_input = not self.name.startswith( self._output_startswith )
+#         #self.basename='PROFILE'
+#     def get_format( self ):
+#         return "anvio_db"
+#     def get_output_cmd_name(self):
+#         if self.is_input:
+#             return "output_%s" % self.name
+#         else:
+#             return self.name
+#     def get_input_cmd_name(self):
+#         if self.is_output:
+#             return "input_%s" % self.name
+#         else:
+#             return self.name
+#     def get_base_filename(self, multiple=False):
+#         if multiple:
+#             return "${gxy_%s.metadata.anvio_basename}" % self.get_output_cmd_name()
+#         return "${%s.metadata.anvio_basename}" % self.get_output_cmd_name()
+#     def to_cmd_line( self ):
+#         text = ''
+#         if self.multiple:
+#             cmd_text = """
+#             #for $gxy_%s in $%s:
+#                 %s "${gxy_%s.extra_files_path}/%s"
+#             #end for
+#             """ % ( self.get_output_cmd_name(), self.get_output_cmd_name(), self.get_arg_text(), self.get_output_cmd_name(), self.get_base_filename(multiple=True) ) #( self.name, self.name, self.get_arg_text(), self.name, self.name )
+#         else:
+#             cmd_text = "%s '${%s.extra_files_path}/%s'" % ( self.get_arg_text(), self.get_output_cmd_name(), self.get_base_filename() )
+#         if not self.multiple:
+#             text = """
+# #if $%s:
+#     %s
+# #end if\n""" % ( self.get_output_cmd_name(), cmd_text )
+#         else:
+#             text = cmd_text
+#         return text
 
-    def get_pre_cmd_line( self ):
-        text = ''
-        if self.is_input:
-            if self.multiple:
-                #
-                cmd_text = """
-                #for $GXY_I, ($gxy_%s, $gxy_%s) in $enumerate( $zip( $%s, $%s ) ):
-                    #if $GXY_I != 0:
-                        &&
-                    #end if
-                    cp -R '${gxy_%s.extra_files_path}' '${gxy_%s.extra_files_path}'
-                #end for
-                """ % ( self.get_input_cmd_name(), self.get_output_cmd_name(), self.get_input_cmd_name(), self.get_output_cmd_name(), self.get_input_cmd_name(), self.get_output_cmd_name() )
-                #
-            else:
-                cmd_text = "cp -R '${%s.extra_files_path}' '${%s.extra_files_path}'" % ( self.get_input_cmd_name(), self.get_output_cmd_name() )
-            if not self.required:
-                text = """
-    #if $%s:
-        %s
-    #else
-        echo ''
-    #end if""" % ( self.get_input_cmd_name(), cmd_text )
-            else:
-                text = cmd_text
-        else:
-            text = "mkdir '${%s.extra_files_path}'\n" % ( self.get_output_cmd_name() )
-        return text
+#     def get_pre_cmd_line( self ):
+#         text = ''
+#         if self.is_input:
+#             if self.multiple:
+#                 #
+#                 cmd_text = """
+#                 #for $GXY_I, ($gxy_%s, $gxy_%s) in $enumerate( $zip( $%s, $%s ) ):
+#                     #if $GXY_I != 0:
+#                         &&
+#                     #end if
+#                     cp -R '${gxy_%s.extra_files_path}' '${gxy_%s.extra_files_path}'
+#                 #end for
+#                 """ % ( self.get_input_cmd_name(), self.get_output_cmd_name(), self.get_input_cmd_name(), self.get_output_cmd_name(), self.get_input_cmd_name(), self.get_output_cmd_name() )
+#                 #
+#             else:
+#                 cmd_text = "cp -R '${%s.extra_files_path}' '${%s.extra_files_path}'" % ( self.get_input_cmd_name(), self.get_output_cmd_name() )
+#             if not self.required:
+#                 text = """
+#     #if $%s:
+#         %s
+#     #else
+#         echo ''
+#     #end if""" % ( self.get_input_cmd_name(), cmd_text )
+#             else:
+#                 text = cmd_text
+#         else:
+#             text = "mkdir '${%s.extra_files_path}'\n" % ( self.get_output_cmd_name() )
+#         return text
 
-    def get_post_cmd_line( self ):
-        return ''
+#     def get_post_cmd_line( self ):
+#         return ''
 
-    def to_xml_param( self ):
-        if self.is_input and self.multiple:
-            return """<param name=%s type="%s" collection_type="%s" label=%s format="%s" optional="%s" multiple="%s" argument=%s help=%s/>%s""" % \
-                        (
-                            quoteattr( self.get_input_cmd_name() ), 
-                            'data_collection',#self.get_type(),
-                            'list',
-                            self.get_label(), 
-                            self.get_format(), 
-                            self.get_optional(),
-                            self.get_multiple(),
-                            self.get_argument(), 
-                            self.get_help(extra=COLLECTION_UX_FAIL_NOTE_USER),
-                            COLLECTION_UX_FAIL_NOTE,
-                        )
-        return super( ParameterUnknownDB, self ).to_xml_param()
-    def to_xml_output( self ):
-        if self.is_input and self.multiple:
-            return """<collection name=%s type="%s" format="%s" %s %s %s inherit_format="True" label=%s />""" % \
-                (
-                    quoteattr(self.get_output_cmd_name() ),
-                    'list',
-                    self.get_format().split(',')[0],
-                    self.get_format_source(),
-                    self.get_metadata_source(),
-                    self.get_structured_like(),
-                    self.get_output_label(),
-                )
-        else:
-            return super( ParameterUnknownDB, self ).to_xml_output()
-    def get_structured_like(self):
-        if self.is_input and self.multiple:
-            return 'structured_like="input_%s"' % ( self.name )
-        else:
-            return ''
-            #return super( ParameterUnknownDB, self ).get_structured_like()
-###
-###
+#     def to_xml_param( self ):
+#         if self.is_input and self.multiple:
+#             return """<param name=%s type="%s" collection_type="%s" label=%s format="%s" optional="%s" multiple="%s" argument=%s help=%s/>%s""" % \
+#                         (
+#                             quoteattr( self.get_input_cmd_name() ), 
+#                             'data_collection',#self.get_type(),
+#                             'list',
+#                             self.get_label(), 
+#                             self.get_format(), 
+#                             self.get_optional(),
+#                             self.get_multiple(),
+#                             self.get_argument(), 
+#                             self.get_help(extra=COLLECTION_UX_FAIL_NOTE_USER),
+#                             COLLECTION_UX_FAIL_NOTE,
+#                         )
+#         return super( ParameterUnknownDB, self ).to_xml_param()
+#     def to_xml_output( self ):
+#         if self.is_input and self.multiple:
+#             return """<collection name=%s type="%s" format="%s" %s %s %s inherit_format="True" label=%s />""" % \
+#                 (
+#                     quoteattr(self.get_output_cmd_name() ),
+#                     'list',
+#                     self.get_format().split(',')[0],
+#                     self.get_format_source(),
+#                     self.get_metadata_source(),
+#                     self.get_structured_like(),
+#                     self.get_output_label(),
+#                 )
+#         else:
+#             return super( ParameterUnknownDB, self ).to_xml_output()
+#     def get_structured_like(self):
+#         if self.is_input and self.multiple:
+#             return 'structured_like="input_%s"' % ( self.name )
+#         else:
+#             return ''
+#             #return super( ParameterUnknownDB, self ).get_structured_like()
+# ###
+# ###
 
 class ParameterINOUTCOMPOSITE_DATA_DIR_PATH( ParameterDB ):
     def __init__( self, *args, **kwd ):
@@ -813,7 +813,7 @@ class ParameterListOrFile( ParameterFILE_PATH ):
 DEFAULT_PARAMETER = Parameter
 
 PARAMETER_BY_METAVAR = {
-    'DB': ParameterUnknownDB,
+    # 'DB': ParameterUnknownDB,
     'INT': ParameterINT,
     'INTEGER': ParameterINT,
     'FLOAT': ParameterFLOAT,
@@ -855,14 +855,14 @@ PARAMETER_BY_METAVAR = {
     'VARIABILITY_TABLE': ParameterVARIABILITY_TABLE,
     'VARIABILITY_PROFILE': ParameterVARIABILITY_TABLE,
     'STATE_FILE': ParameterSTATE_FILE,
-    'DATABASE': ParameterUnknownDB,
+    # 'DATABASE': ParameterUnknownDB,
     'BAM_FILE': ParameterINPUT_BAM,
     'REPORT_FILE_PATH': ParameterREPORT_FILE_PATH,
     'FLAT_FILE': ParameterFILE_PATH,
     'STATE': ParameterSTATE_FILE,
     'BINS_DATA': ParameterTABULAR,
     'LINKMER_REPORT': ParameterFILE_PATH, #should we add datatype? well output from anvi-report-linkmers is not datatyped due to generic metavar, so can't really
-    'DB PATH': ParameterUnknownDB,
+    # 'DB PATH': ParameterUnknownDB,
     'BAM FILE[S]': ParameterINPUT_BAMS,
     'FASTA FILE': ParameterFASTA,
     'REPORT FILE': ParameterREPORT_FILE_PATH,
@@ -880,7 +880,7 @@ PARAMETER_BY_METAVAR = {
     'FASTA_FILE': ParameterFASTA,
     'FASTQ_FILES': ParameterFASTQ,
     'IP_ADDR': ParameterDiscard,
-    'DATABASE_PATH': ParameterUnknownDB,
+    # 'DATABASE_PATH': ParameterUnknownDB,
 }
 
 PARAMETER_BY_NAME = {

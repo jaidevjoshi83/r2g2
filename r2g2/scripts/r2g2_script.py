@@ -3,13 +3,17 @@ import subprocess
 import tempfile
 import os, sys
 import shutil
-from r_script_to_galaxy_wrapper import *
-from dependency_generator import  return_galax_tag
+from r2g2.core import TOOL_TEMPLATE
+from r2g2.dependency_generator import  return_galax_tag, detect_package_channel
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import time 
 
-from RScriptSupport import (
+#TBD: temparily anvio import, in the future will be replace by the independant anvio package 
+from r2g2.anvio import format_help, galaxy_tool_citation
+from jinja2 import Template
+
+from r2g2.parsers.r_parser import (
     edit_r_script,
     json_to_python,
     return_dependencies,
@@ -17,7 +21,7 @@ from RScriptSupport import (
     extract_simple_parser_info,
     #TBD: R's logical type need be handled correctly while building galaxy input params. 
     logical, 
-    pretty_xml
+    pretty_xml, 
 )
 
 def generate_galaxy_xml(xml_str):
@@ -33,7 +37,8 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     if not description:
         description = r_script.split('/')[len(r_script.split('/'))-1].split('.')[0] + " tool"
 
-    dependency_tag = "\n".join([return_galax_tag(i[0], i[1], dep_info) for i in return_dependencies(r_script)])
+    dependency_tag = "\n".join([return_galax_tag(*detect_package_channel(i), False) for i in return_dependencies(r_script)])
+
     current_dir = os.getcwd()
     temp_dir = tempfile.mkdtemp(dir=current_dir)
 
@@ -89,12 +94,26 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     blankenberg_parameters = local_dict.get('blankenberg_parameters')
     blankenberg_parameters.param_cat = extract_simple_parser_info(param_info)
 
-    cond_section_param, cond_param_command =  blankenberg_parameters.dict_to_xml_and_command(   blankenberg_parameters.param_cat )
-    mut_input_param, mut_command = blankenberg_parameters.mutual_conditional(blankenberg_parameters.param_cat )
     flat_param, flat_command = blankenberg_parameters.flat_param_groups(blankenberg_parameters.param_cat )
 
+    if not blankenberg_parameters.param_cat['subparsers']:
+        cond_section_param, cond_param_command = None, None
+    else:
+        cond_section_param, cond_param_command =  blankenberg_parameters.dict_to_xml_and_command(   blankenberg_parameters.param_cat )
+
+    mut_input_param, mut_command = blankenberg_parameters.mutual_conditional(blankenberg_parameters.param_cat )
+  
     output_params  = "\n".join(list(set([i.to_xml_param() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
-    output_command  = "\n".join(list(set([i.to_cmd_line() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
+    output_command  = "\t\t\t\t\t".join(list(set([i.to_cmd_line() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
+
+    if flat_command :
+        combined_command.append(flat_command )
+    
+    if flat_param:
+        combined_xml.append(flat_param)
+
+    if output_command :
+        combined_command.append(output_command )
 
     if cond_param_command:
         combined_xml.append("\n".join(pretty_xml(cond_section_param ).split("\n")[1:]))
@@ -102,20 +121,14 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     if mut_input_param:
         combined_xml.append(mut_input_param)
 
-    if flat_param:
-        combined_xml.append(flat_param)
-
     if cond_param_command:
         combined_command.append(cond_param_command)   
 
     if  mut_command:
         combined_command.append( mut_command)
 
-    if flat_command :
-        combined_command.append(flat_command )
 
-    if output_command :
-        combined_command.append(output_command )
+
 
     print("####################################################################")
     print("Tool parameters have been extracted successfully...")
@@ -125,7 +138,12 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     tool_type = DEFAULT_TOOL_TYPE
     filename = r_script.split('/')[len(r_script.split('/'))-1]
     cleaned_filename = filename.lower().replace( '-', '_').replace('.r', '')
-
+    try:
+        formated_string = format_help(blankenberg_parameters.format_help().replace(os.path.basename(__file__), filename))
+    except Exception as e:
+        print(f"Error formatting help: {e}")    
+        formated_string = " No help available."
+        
     template_dict = {
         'id': cleaned_filename ,
         'tool_type': tool_type,
@@ -140,7 +158,7 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
         'inputs': ["\n".join(combined_xml)],
         'outputs': [output_params],
         #'tests': None,
-        'help': format_help(blankenberg_parameters.format_help().replace(os.path.basename(__file__), filename)),
+        'help': formated_string,
         'doi': citation_doi.split(','),
         'bibtex_citations': galaxy_tool_citation,
         'bibtex_citations': '',
@@ -148,6 +166,8 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
         }
 
     tool_xml = Template(TOOL_TEMPLATE).render( **template_dict )
+
+    print("xml wrapper generated", os.path.join (out_dir_path, "%s.xml" % cleaned_filename ))
 
     with open( os.path.join (out_dir_path, "%s.xml" % cleaned_filename ), 'w') as out:
         out.write(tool_xml)
@@ -157,8 +177,8 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     else:
         print(f"Directory does not exist: {temp_dir}")
 
-if __name__ == '__main__':
 
+def run_main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-r', '--r_script_name', required=False, default=None, help="Provide the path of an R script... ")
     parser.add_argument('-f', '--r_scripts', required=False, default=None, help="A path of a text file containing full path of R scripts.")
@@ -202,3 +222,6 @@ if __name__ == '__main__':
 
     total_elapsed = time.time() - start_time
     print(f"All files processed. Total time: {total_elapsed:.2f}s")
+
+if __name__ == "__main__":
+    run_main()

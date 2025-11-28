@@ -1,0 +1,3 @@
+[console_scripts]
+r2g2-package = r2g2.scripts.r2g2_package:main
+r2g2-script = r2g2.scripts.r2g2_script:run_main
