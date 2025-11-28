@@ -6,7 +6,7 @@ from rpy2.robjects.packages import PackageNotInstalledError
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 # from r_script_to_galaxy_wrapper import FakeArg
-from anvio import FakeArg, SKIP_PARAMETER_NAMES 
+from r2g2.anvio import FakeArg, SKIP_PARAMETER_NAMES 
 from pathlib import Path
 import re
 import functools            
@@ -524,7 +524,7 @@ def json_to_python(json_file):
     arg_str_function = f"""
 #!/usr/bin/env python
 # from r_script_to_galaxy_wrapper import FakeArg
-from RScriptSupport import CustomFakeArg
+from r2g2.parsers.r_parser import CustomFakeArg
 import json
 import argparse
 

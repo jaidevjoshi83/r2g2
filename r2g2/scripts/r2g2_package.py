@@ -5,22 +5,20 @@
 
 import argparse
 import os
-from config import CONFIG_SPLIT_DESIRED_OUTPUTS, SAVE_R_OBJECT_TEXT
-from templates import (tool_xml, input_dataset, input_text, input_boolean, 
+from r2g2.config import CONFIG_SPLIT_DESIRED_OUTPUTS, SAVE_R_OBJECT_TEXT
+from r2g2.templates import (tool_xml, input_dataset, input_text, input_boolean, 
                      input_integer, input_float, input_select, 
                      input_not_determined, optional_input_dataset,
                      optional_input_text, optional_input_boolean,
                      optional_input_integer, optional_input_float,
                      optional_input_select, optional_input_not_determined,
                      ellipsis_input, INPUT_NOT_DETERMINED_DICT)
-from utils import simplify_text, to_docstring, unroll_vector_to_text
-from xml_generators import generate_macro_xml, generate_LOAD_MATRIX_TOOL_XML
+from r2g2.utils import simplify_text, to_docstring, unroll_vector_to_text, str_typeint
+from r2g2.xml_generators import generate_macro_xml, generate_LOAD_MATRIX_TOOL_XML
 import rpy2.robjects.packages as rpackages
 from rpy2 import robjects
 from rpy2.robjects.help import pages
 from xml.sax.saxutils import quoteattr
-# from rpy2.rinterface import str_typeint
-from utils import str_typeint
 
 def main():
     parser = argparse.ArgumentParser()

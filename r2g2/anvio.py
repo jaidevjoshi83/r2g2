@@ -9,7 +9,7 @@ import os
 from collections import OrderedDict
 from xml.sax.saxutils import quoteattr
 from jinja2 import Template
-import anvio
+# import anvio
 
 sys.path.append( os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir ) ) )#, 'anvi')))
 

@@ -3,15 +3,17 @@ import subprocess
 import tempfile
 import os, sys
 import shutil
-from r_script_to_galaxy_wrapper import TOOL_TEMPLATE
-from dependency_generator import  return_galax_tag, detect_package_channel
+from r2g2.core import TOOL_TEMPLATE
+from r2g2.dependency_generator import  return_galax_tag, detect_package_channel
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import time 
-from anvio import format_help, galaxy_tool_citation
+
+#TBD: temparily anvio import, in the future will be replace by the independant anvio package 
+from r2g2.anvio import format_help, galaxy_tool_citation
 from jinja2 import Template
 
-from RScriptSupport import (
+from r2g2.parsers.r_parser import (
     edit_r_script,
     json_to_python,
     return_dependencies,
@@ -175,8 +177,8 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     else:
         print(f"Directory does not exist: {temp_dir}")
 
-if __name__ == '__main__':
 
+def run_main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-r', '--r_script_name', required=False, default=None, help="Provide the path of an R script... ")
     parser.add_argument('-f', '--r_scripts', required=False, default=None, help="A path of a text file containing full path of R scripts.")
@@ -220,3 +222,6 @@ if __name__ == '__main__':
 
     total_elapsed = time.time() - start_time
     print(f"All files processed. Total time: {total_elapsed:.2f}s")
+
+if __name__ == "__main__":
+    run_main()
