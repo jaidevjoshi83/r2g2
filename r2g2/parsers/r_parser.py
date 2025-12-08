@@ -713,6 +713,56 @@ def generate_mutual_group_conditionals(param_strings, mut_groups):
 
     return "\n".join(xml_lines)
 
+def output_param_generator_from_argparse(string):
+    outputs = string.split(";")
+    xml_outputs = []
+    output_command = []
+
+    for block in outputs:
+        block = block.strip()
+        if not block:
+            continue
+    
+        params = block.split(",")
+    
+        out = {
+            "from_work_directory": "",  # default
+            "name":"",
+            "format":"text",
+            "lable":"ouput data file",
+            "output_argument":"None",
+            
+        }
+
+        for p in params:
+
+            if ":" in p:
+         
+                key, value = p.split(":")
+                out[key] = value
+                
+            else:
+                # flag like from_work_directory
+                out[p] = "true"
+
+        if not "None" == out["output_argument"]:
+            print(f'{out["output_argument"]}    "{out["from_work_directory"]}"\n')
+            output_command.append( f'{out["output_argument"]}    "{out["from_work_directory"]}"\n')
+                
+
+        # Build label
+        label = f"{out['label']}"
+    
+        # Build XML output line
+        xml_tag = (
+            f'<data name="{out["name"]}" format="{out["format"]}" '
+            f'label="{label}" from_work_dir="{out["name"]}.pdb"/>\n'
+        )
+        
+        xml_outputs.append(xml_tag)
+
+    return xml_outputs, output_command
+
 def logical(value):
     val = value.lower()
     if val == "true":
