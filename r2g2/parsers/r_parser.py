@@ -714,6 +714,24 @@ def generate_mutual_group_conditionals(param_strings, mut_groups):
     return "\n".join(xml_lines)
 
 def output_param_generator_from_argparse(string):
+
+    def normalize_argument(arg):
+
+        """
+        convert any arguments, e.g., "--Output RDS", "output-rds", "OUTPUT_RDS", "output rds" into a clean 
+        galaxy style param name "output_rds"
+        """
+
+        arg = arg.strip()
+        arg = re.sub(r"^-+", "", arg)
+        arg_clean = re.sub(r"[^A-Za-z0-9]+", " ", arg)
+        parts = arg_clean.lower().split()
+        cli_flag = "--" + "-".join(parts)
+        identifier = "_".join(parts)
+
+        return identifier
+
+
     outputs = string.split(";")
     xml_outputs = []
     output_command = []
@@ -727,29 +745,24 @@ def output_param_generator_from_argparse(string):
     
         out = {
             "from_work_directory": "",  # default
-            "name":"",
             "format":"text",
             "lable":"ouput data file",
             "output_argument":"None",
-            
         }
 
         for p in params:
-
             if ":" in p:
-         
                 key, value = p.split(":")
                 out[key] = value
-                
             else:
                 # flag like from_work_directory
                 out[p] = "true"
 
         if not "None" == out["output_argument"]:
-            print(f'{out["output_argument"]}    "{out["from_work_directory"]}"\n')
-            output_command.append( f'{out["output_argument"]}    "{out["from_work_directory"]}"\n')
-                
-
+            output_command.append(f'{out["output_argument"]} "${normalize_argument(out["name"])}"\n')
+        else:
+            raise ValueError("Output dataset argument is not defined in the user-defined parameters.")
+            
         # Build label
         label = f"{out['label']}"
     
@@ -760,7 +773,6 @@ def output_param_generator_from_argparse(string):
         )
         
         xml_outputs.append(xml_tag)
-
     return xml_outputs, output_command
 
 def logical(value):

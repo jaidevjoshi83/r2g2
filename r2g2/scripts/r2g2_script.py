@@ -107,13 +107,13 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     # output_params  = "\n".join(list(set([i.to_xml_param() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
     # output_command  = "\t\t\t\t\t".join(list(set([i.to_cmd_line() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
 
-
     if user_define_output_param:
+        print("User defined output parameters detected...")
         output_params, output_command = output_param_generator_from_argparse(user_define_output_param)
+    
     else:
         output_params  = "\n".join(list(set([i.to_xml_param() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
         output_command  = "\t\t\t\t\t".join(list(set([i.to_cmd_line() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
-
 
     if flat_command :
         combined_command.append(flat_command )
@@ -122,7 +122,8 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
         combined_xml.append(flat_param)
 
     if output_command :
-        combined_command.append(output_command )
+        print("125", output_command)
+        combined_command.append("\n".join(output_command ))
 
     if cond_param_command:
         combined_xml.append("\n".join(pretty_xml(cond_section_param ).split("\n")[1:]))
@@ -135,6 +136,8 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
 
     if  mut_command:
         combined_command.append( mut_command)
+
+    print("140", combined_command)
 
 
     print("####################################################################")
@@ -152,9 +155,6 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
         print(f"Error formatting help: {e}")    
         formated_string = " No help available."
 
-    if user_define_output_param:
-        output_params = output_param_generator_from_argparse(user_define_output_param)
-
     template_dict = {
         'id': cleaned_filename ,
         'tool_type': tool_type,
@@ -167,7 +167,7 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
         'requirements': dependency_tag,
         'command':"\n".join(combined_command), 
         'inputs': ["\n".join(combined_xml)],
-        'outputs': [output_params],
+        'outputs': ["\n".join(output_params)],
         #'tests': None,
         'help': formated_string,
         'doi': citation_doi.split(','),
@@ -223,7 +223,7 @@ def run_main():
         print(f"[{idx}/{total_files}] Processing: {r_spt} ...")
 
         try:
-            main(r_spt, args.output_dir, args.profile, args.dependencies, args.description, args.tool_version, args.citation_doi)
+            main(r_spt, args.output_dir, args.profile, args.dependencies, args.description, args.tool_version, args.citation_doi, args.user_define_output_param)
             status = "Success"
         except Exception as e:
             status = f"Failed ({e})"
