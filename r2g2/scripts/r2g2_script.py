@@ -122,7 +122,6 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
         combined_xml.append(flat_param)
 
     if output_command :
-        print("125", output_command)
         combined_command.append("\n".join(output_command ))
 
     if cond_param_command:
@@ -136,9 +135,6 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
 
     if  mut_command:
         combined_command.append( mut_command)
-
-    print("140", combined_command)
-
 
     print("####################################################################")
     print("Tool parameters have been extracted successfully...")

@@ -744,7 +744,6 @@ def output_param_generator_from_argparse(string):
         params = block.split(",")
     
         out = {
-            "from_work_directory": "",  # default
             "format":"text",
             "lable":"ouput data file",
             "output_argument":"None",
@@ -758,8 +757,10 @@ def output_param_generator_from_argparse(string):
                 # flag like from_work_directory
                 out[p] = "true"
 
+        out["name"] = normalize_argument(out["output_argument"])
+
         if not "None" == out["output_argument"]:
-            output_command.append(f'{out["output_argument"]} "${normalize_argument(out["name"])}"\n')
+            output_command.append(f'{out["output_argument"]} "${out["name"]}"\n')
         else:
             raise ValueError("Output dataset argument is not defined in the user-defined parameters.")
             
@@ -769,7 +770,7 @@ def output_param_generator_from_argparse(string):
         # Build XML output line
         xml_tag = (
             f'<data name="{out["name"]}" format="{out["format"]}" '
-            f'label="{label}" from_work_dir="{out["name"]}.pdb"/>\n'
+            f'label="{label}" />\n'
         )
         
         xml_outputs.append(xml_tag)
