@@ -22,6 +22,7 @@ from r2g2.parsers.r_parser import (
     #TBD: R's logical type need be handled correctly while building galaxy input params. 
     logical, 
     pretty_xml, 
+    output_param_generator_from_argparse
 )
 
 def generate_galaxy_xml(xml_str):
@@ -29,7 +30,7 @@ def generate_galaxy_xml(xml_str):
     xml_str = ET.tostring(xml_str, encoding="unicode")
     return minidom.parseString(xml_str).toprettyxml(indent="  ")
 
-def main(r_script, out_dir, profile, dep_info, description, tool_version, citation_doi):
+def main(r_script, out_dir, profile, dep_info, description, tool_version, citation_doi, user_define_output_param=False):
 
     if not citation_doi:
         citation_doi = ''
@@ -103,8 +104,16 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
 
     mut_input_param, mut_command = blankenberg_parameters.mutual_conditional(blankenberg_parameters.param_cat )
   
-    output_params  = "\n".join(list(set([i.to_xml_param() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
-    output_command  = "\t\t\t\t\t".join(list(set([i.to_cmd_line() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
+    # output_params  = "\n".join(list(set([i.to_xml_param() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
+    # output_command  = "\t\t\t\t\t".join(list(set([i.to_cmd_line() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
+
+
+    if user_define_output_param:
+        output_params, output_command = output_param_generator_from_argparse(user_define_output_param)
+    else:
+        output_params  = "\n".join(list(set([i.to_xml_param() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
+        output_command  = "\t\t\t\t\t".join(list(set([i.to_cmd_line() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
+
 
     if flat_command :
         combined_command.append(flat_command )
@@ -128,8 +137,6 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
         combined_command.append( mut_command)
 
 
-
-
     print("####################################################################")
     print("Tool parameters have been extracted successfully...")
     print("####################################################################")
@@ -138,12 +145,16 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     tool_type = DEFAULT_TOOL_TYPE
     filename = r_script.split('/')[len(r_script.split('/'))-1]
     cleaned_filename = filename.lower().replace( '-', '_').replace('.r', '')
+
     try:
         formated_string = format_help(blankenberg_parameters.format_help().replace(os.path.basename(__file__), filename))
     except Exception as e:
         print(f"Error formatting help: {e}")    
         formated_string = " No help available."
-        
+
+    if user_define_output_param:
+        output_params = output_param_generator_from_argparse(user_define_output_param)
+
     template_dict = {
         'id': cleaned_filename ,
         'tool_type': tool_type,
@@ -188,6 +199,7 @@ def run_main():
     parser.add_argument('-s', '--dependencies', required=False,  default=False, help=" Extract dependency information..")
     parser.add_argument('-v', '--tool_version', required=False,  default='0.0.1', help="Galaxy tool version..")
     parser.add_argument('-c', '--citation_doi', required=False,  default=None, help="Comma separated Citation DOI.")
+    parser.add_argument('-u', '--user_define_output_param', required=False, default=False, help="Rather guessing output params, user can define output params in specific format. Ex. 'name:protein,format:pdb,label:protein file,from_work_directory;name:ligand,format:pdb,label:ligand file,from_work_directory'")
 
     args = parser.parse_args()
 
