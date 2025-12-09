@@ -133,9 +133,6 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
 
         mut_input_param, mut_command = blankenberg_parameters.mutual_conditional(blankenberg_parameters.param_cat )
     
-        # output_params  = "\n".join(list(set([i.to_xml_param() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
-        # output_command  = "\t\t\t\t\t".join(list(set([i.to_cmd_line() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
-
         output_args_list = []
         if user_define_output_param:
             print("User defined output parameters detected...")
@@ -143,9 +140,9 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
             output_params, output_command = "\n".join(output_params), "\t\t\t\t\t".join(output_command)
         
         else:
-            # output_params  = "\n".join(list(set([i.to_xml_param() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
-            # output_command  = "\t\t\t\t\t".join(list(set([i.to_cmd_line() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
-            pass
+            output_params  = "\n".join(list(set([i.to_xml_param() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
+            output_command  = "\t\t\t\t\t".join(list(set([i.to_cmd_line() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
+            # pass
 
         if flat_command :
             combined_command.append(flat_command )
