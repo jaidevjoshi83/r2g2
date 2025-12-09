@@ -38,6 +38,11 @@ class ParameterData(Parameter):
 
 class CustomFakeArg(FakeArg):
     def __init__(self, *args, **kwargs):
+        ignore_params = kwargs.pop('ignore_params', [])
+        if ignore_params is None:
+            ignore_params = []
+        self.ignore_params = [self.clean_arg_name(p) for p in ignore_params]
+
         data_params = kwargs.pop('data_params', None)
         
         self.data_params = {}
@@ -137,9 +142,11 @@ class CustomFakeArg(FakeArg):
         # Normal params
         for opt in spec.get("groups", {}).get("options", []):
             if opt != "--help" and "output"  not in opt:
-                parent.append(self.generate_param( opt))
-                # print("            " * level + f"{opt}{' '}'${full_name}.{self.clean_arg_name(opt)}'\n")
-                cmd_parts.append("\t\t\t\t\t\t\t" * level + f"{opt}{' '}'${full_name}.{self.clean_arg_name(opt)}'")
+                res = self.generate_param( opt)
+                if res is not None:
+                    parent.append(res)
+                    # print("            " * level + f"{opt}{' '}'${full_name}.{self.clean_arg_name(opt)}'\n")
+                    cmd_parts.append("\t\t\t\t\t\t\t" * level + f"{opt}{' '}'${full_name}.{self.clean_arg_name(opt)}'")
 
         # Nested subparsers
         if spec.get("subparsers"):
@@ -206,7 +213,9 @@ class CustomFakeArg(FakeArg):
                 when2 = ET.SubElement(cond2, "when", value=o)
                 mut_cond_command = f"\n#if '$mut_{group_name}.{group_name}_selector' == '%s'\n%s\n#end if\n"%(self.clean_arg_name(o), f"    '${group_name}.{self.clean_arg_name(o)}'")
                 mut_command.append(mut_cond_command)
-                when2.append(self.generate_param(o))
+                res = self.generate_param(o)
+                if res is not None:
+                    when2.append(res)
             mut_list.append("\n".join(pretty_xml(cond2).split("\n")[1:]))
                 
         return "\n".join(mut_list), "\n".join(mut_command)
@@ -217,9 +226,11 @@ class CustomFakeArg(FakeArg):
         for group in spec['groups'].keys():
             for item in spec['groups'][group]:
                 if item != "--help" and "output"  not in item:
-                    param, command = self.generate_param( item, flat=True)
-                    param_list.append("\n".join(pretty_xml(param).split("\n")[1:]))
-                    command_list.append("\t\t\t"+command)
+                    res = self.generate_param( item, flat=True)
+                    if res:
+                        param, command = res
+                        param_list.append("\n".join(pretty_xml(param).split("\n")[1:]))
+                        command_list.append("\t\t\t"+command)
         return "\n".join(param_list),  "\n".join(command_list)
                 
     def groups_params(self):
@@ -245,6 +256,8 @@ class CustomFakeArg(FakeArg):
     def generate_param(self, opt, flat=False):
         for d in self.oynaxraoret_get_params( {} ):
             if d.name not in SKIP_PARAMETER_NAMES and d.is_input:
+                if d.name in self.ignore_params:
+                    continue
                 if self.clean_arg_name(opt) == d.name:
                     if d.name in self.data_params:
                          d.info_dict['data_format'] = self.data_params[d.name].get('format', 'txt')
@@ -545,7 +558,7 @@ param_info = param_info_parsing(dict(locals()))
 """%(args_string)    
     return arg_str_function
 
-def json_to_python(json_file, data_params=None):
+def json_to_python(json_file, data_params=None, ignore_params=None):
 
     data = clean_json(json_file)
     parser_name = 'parser'     
@@ -553,6 +566,7 @@ def json_to_python(json_file, data_params=None):
     
     # Format data_params as a python list string or None
     data_params_str = str(data_params) if data_params else "None"
+    ignore_params_str = str(ignore_params) if ignore_params else "None"
 
     arg_str_function = """
 #!/usr/bin/env python
@@ -566,10 +580,10 @@ import argparse
 #     globals().update(parent_locals)
 #     return parser_1
 
-def r_script_argument_parsing(parent_locals, CustomFakeArg=CustomFakeArg, data_params=None):
+def r_script_argument_parsing(parent_locals, CustomFakeArg=CustomFakeArg, data_params=None, ignore_params=None):
     __description__ = "test"
     
-    parser = CustomFakeArg(description=__description__, data_params=data_params)\n    %s
+    parser = CustomFakeArg(description=__description__, data_params=data_params, ignore_params=ignore_params)\n    %s
     globals().update(parent_locals)
 
     param_info  =  param_info_parsing(dict(locals()))
@@ -577,9 +591,9 @@ def r_script_argument_parsing(parent_locals, CustomFakeArg=CustomFakeArg, data_p
 
     return parser
 
-blankenberg_parameters = r_script_argument_parsing(dict(locals()), data_params=%s)
+blankenberg_parameters = r_script_argument_parsing(dict(locals()), data_params=%s, ignore_params=%s)
 
-"""%(args_string, data_params_str)
+"""%(args_string, data_params_str, ignore_params_str)
     
     return arg_str_function
 
@@ -768,6 +782,7 @@ def output_param_generator_from_argparse(string):
     outputs = string.split(";")
     xml_outputs = []
     output_command = []
+    output_args = []
 
     for block in outputs:
         block = block.strip()
@@ -778,7 +793,7 @@ def output_param_generator_from_argparse(string):
     
         out = {
             "format":"text",
-            "lable":"ouput data file",
+            "label":"ouput data file",
             "output_argument":"None",
         }
 
@@ -794,6 +809,7 @@ def output_param_generator_from_argparse(string):
 
         if not "None" == out["output_argument"]:
             output_command.append(f'{out["output_argument"]} "${out["name"]}"\n')
+            output_args.append(out["output_argument"])
         else:
             raise ValueError("Output dataset argument is not defined in the user-defined parameters.")
             
@@ -807,7 +823,7 @@ def output_param_generator_from_argparse(string):
         )
         
         xml_outputs.append(xml_tag)
-    return xml_outputs, output_command
+    return xml_outputs, output_command, output_args
 
 def logical(value):
     val = value.lower()
