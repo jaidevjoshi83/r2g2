@@ -30,7 +30,7 @@ def generate_galaxy_xml(xml_str):
     xml_str = ET.tostring(xml_str, encoding="unicode")
     return minidom.parseString(xml_str).toprettyxml(indent="  ")
 
-def main(r_script, out_dir, profile, dep_info, description, tool_version, citation_doi, user_define_output_param=False):
+def main(r_script, out_dir, profile, dep_info, description, tool_version, citation_doi, user_define_output_param=False, user_define_input_param=None):
 
     if not citation_doi:
         citation_doi = ''
@@ -67,7 +67,24 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
 
     subprocess.run(['Rscript',  edited_r_script])
 
-    python_code_as_string = json_to_python(json_out)
+    data_params_list = None
+    if user_define_input_param:
+        if ':' in user_define_input_param:
+             data_params_list = {}
+             for block in user_define_input_param.split(';'):
+                if not block.strip(): continue
+                props = {}
+                for item in block.split(','):
+                    if ':' in item:
+                        k, v = item.split(':', 1)
+                        props[k.strip()] = v.strip()
+                if 'name' in props:
+                    name = props.pop('name')
+                    data_params_list[name] = props
+        else:
+            data_params_list = [p.strip() for p in user_define_input_param.split(',')]
+
+    python_code_as_string = json_to_python(json_out, data_params=data_params_list)
     param_info_dict = {}
     argument_string = json_to_python_for_param_info(json_out)
     argument_string.replace('logical', 'boolean')
@@ -110,6 +127,7 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
     if user_define_output_param:
         print("User defined output parameters detected...")
         output_params, output_command = output_param_generator_from_argparse(user_define_output_param)
+        output_params, output_command = "\n".join(output_params), "\t\t\t\t\t".join(output_command)
     
     else:
         output_params  = "\n".join(list(set([i.to_xml_param() for i in  blankenberg_parameters.oynaxraoret_to_outputs(params)])))
@@ -122,7 +140,7 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
         combined_xml.append(flat_param)
 
     if output_command :
-        combined_command.append("\n".join(output_command ))
+        combined_command.append(output_command )
 
     if cond_param_command:
         combined_xml.append("\n".join(pretty_xml(cond_section_param ).split("\n")[1:]))
@@ -163,7 +181,7 @@ def main(r_script, out_dir, profile, dep_info, description, tool_version, citati
         'requirements': dependency_tag,
         'command':"\n".join(combined_command), 
         'inputs': ["\n".join(combined_xml)],
-        'outputs': ["\n".join(output_params)],
+        'outputs': [output_params],
         #'tests': None,
         'help': formated_string,
         'doi': citation_doi.split(','),
@@ -196,6 +214,7 @@ def run_main():
     parser.add_argument('-v', '--tool_version', required=False,  default='0.0.1', help="Galaxy tool version..")
     parser.add_argument('-c', '--citation_doi', required=False,  default=None, help="Comma separated Citation DOI.")
     parser.add_argument('-u', '--user_define_output_param', required=False, default=False, help="Rather guessing output params, user can define output params in specific format. Ex. 'name:protein,format:pdb,label:protein file,from_work_directory;name:ligand,format:pdb,label:ligand file,from_work_directory'")
+    parser.add_argument('--user_define_input_param', required=False, default=None, help="List of input parameters to be treated as data inputs, comma separated. Ex. 'input_file,reference_data'")
 
     args = parser.parse_args()
 
@@ -218,11 +237,11 @@ def run_main():
         file_start = time.time()
         print(f"[{idx}/{total_files}] Processing: {r_spt} ...")
 
-        try:
-            main(r_spt, args.output_dir, args.profile, args.dependencies, args.description, args.tool_version, args.citation_doi, args.user_define_output_param)
-            status = "Success"
-        except Exception as e:
-            status = f"Failed ({e})"
+        # try:
+        main(r_spt, args.output_dir, args.profile, args.dependencies, args.description, args.tool_version, args.citation_doi, args.user_define_output_param, args.user_define_input_param)
+        status = "Success"
+        # except Exception as e:
+        #     status = f"Failed ({e})"
 
         file_end = time.time()
         elapsed = file_end - file_start

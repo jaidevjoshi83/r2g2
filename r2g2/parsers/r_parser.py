@@ -5,8 +5,9 @@ import rpy2.robjects.packages as rpackages
 from rpy2.robjects.packages import PackageNotInstalledError
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
+from xml.sax.saxutils import quoteattr
 # from r_script_to_galaxy_wrapper import FakeArg
-from r2g2.anvio import FakeArg, SKIP_PARAMETER_NAMES 
+from r2g2.anvio import FakeArg, SKIP_PARAMETER_NAMES, Parameter
 from pathlib import Path
 import re
 import functools            
@@ -20,8 +21,33 @@ def pretty_xml(element):
     reparsed = minidom.parseString(rough_str)
     return reparsed.toprettyxml(indent="  ")
 
+class ParameterData(Parameter):
+    def get_type(self):
+        return 'data'
+    
+    def to_xml_param(self):
+        data_format = self.info_dict.get('data_format', 'txt')
+        return """<param name=%s type="data" format="%s" label=%s optional="%s" argument=%s help=%s/>""" % (
+                quoteattr( self.get_input_cmd_name() ), 
+                data_format,
+                self.get_label(), 
+                self.get_optional(),
+                self.get_argument(), 
+                self.get_help(),
+            )
+
 class CustomFakeArg(FakeArg):
     def __init__(self, *args, **kwargs):
+        data_params = kwargs.pop('data_params', None)
+        
+        self.data_params = {}
+        if data_params:
+            if isinstance(data_params, list):
+                for p in data_params:
+                    self.data_params[self.clean_arg_name(p)] = {'format': 'txt'}
+            elif isinstance(data_params, dict):
+                for k, v in data_params.items():
+                    self.data_params[self.clean_arg_name(k)] = v
 
         self.param_cat = {}
         # call parent constructor
@@ -220,6 +246,9 @@ class CustomFakeArg(FakeArg):
         for d in self.oynaxraoret_get_params( {} ):
             if d.name not in SKIP_PARAMETER_NAMES and d.is_input:
                 if self.clean_arg_name(opt) == d.name:
+                    if d.name in self.data_params:
+                         d.info_dict['data_format'] = self.data_params[d.name].get('format', 'txt')
+                         d = ParameterData(d.name, d.arg_short, d.arg_long, d.info_dict)
                     xml_str = d.to_xml_param()
                     if flat:
                         return ET.fromstring(xml_str), d.to_cmd_line()
@@ -516,12 +545,16 @@ param_info = param_info_parsing(dict(locals()))
 """%(args_string)    
     return arg_str_function
 
-def json_to_python(json_file):
+def json_to_python(json_file, data_params=None):
 
     data = clean_json(json_file)
     parser_name = 'parser'     
     args_string = '\n    '.join(data)
-    arg_str_function = f"""
+    
+    # Format data_params as a python list string or None
+    data_params_str = str(data_params) if data_params else "None"
+
+    arg_str_function = """
 #!/usr/bin/env python
 # from r_script_to_galaxy_wrapper import FakeArg
 from r2g2.parsers.r_parser import CustomFakeArg
@@ -529,14 +562,14 @@ import json
 import argparse
 
 # def param_info_parsing(parent_locals):
-#     parser_1 = argparse.ArgumentParser()\n   
+#     parser_1 = argparse.ArgumentParser()\\n   
 #     globals().update(parent_locals)
 #     return parser_1
 
-def r_script_argument_parsing(parent_locals, CustomFakeArg=CustomFakeArg):
+def r_script_argument_parsing(parent_locals, CustomFakeArg=CustomFakeArg, data_params=None):
     __description__ = "test"
     
-    parser = CustomFakeArg(description=__description__)\n    %s
+    parser = CustomFakeArg(description=__description__, data_params=data_params)\n    %s
     globals().update(parent_locals)
 
     param_info  =  param_info_parsing(dict(locals()))
@@ -544,9 +577,9 @@ def r_script_argument_parsing(parent_locals, CustomFakeArg=CustomFakeArg):
 
     return parser
 
-blankenberg_parameters = r_script_argument_parsing(dict(locals()))
+blankenberg_parameters = r_script_argument_parsing(dict(locals()), data_params=%s)
 
-"""%(args_string)
+"""%(args_string, data_params_str)
     
     return arg_str_function
 
