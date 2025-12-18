@@ -4,7 +4,7 @@
 conda create  -n r2g2 conda-forge::rpy2=3.6.2 
 conda activate r2g2
 conda install r-r6=2.6.1 r-argparse=2.2.5
-pip install request packaging
+pip install requests packaging
 
 
 python=3.13
