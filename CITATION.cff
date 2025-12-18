@@ -1,22 +1,28 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 title: "R2G2: A Python-R Framework for Seamless Integration of R/Bioconductor Tools into Galaxy"
-version: "2025"
+version: "0.1.0"
+repository-code: "https://github.com/BlankenbergLab/r2g2"
+
 authors:
   - family-names: "Joshi"
     given-names: "Jayadev"
     affiliation: "Center for Computational Life Sciences, Cleveland Clinic Research, Cleveland Clinic, Cleveland, OH, USA"
     orcid: "https://orcid.org/0000-0001-7589-5230"
+
   - family-names: "Cumbo"
     given-names: "Fabio"
     affiliation: "Center for Computational Life Sciences, Cleveland Clinic Research, Cleveland Clinic, Cleveland, OH, USA"
     orcid: "https://orcid.org/0000-0003-2920-5838"
+
   - family-names: "Blankenberg"
     given-names: "Daniel"
     affiliation: "Center for Computational Life Sciences, Cleveland Clinic Research, Cleveland Clinic, Cleveland, OH, USA"
     orcid: "https://orcid.org/0000-0002-6833-9049"
 
-abstract: "R2G2: A Python-R Framework for Seamless Integration of R/Bioconductor Tools into Galaxy."
+abstract: >
+  R2G2 is a Python–R framework enabling seamless integration of
+  R/Bioconductor tools into the Galaxy platform.
 
 keywords:
   - Galaxy
@@ -26,14 +32,14 @@ keywords:
   - workflow integration
 
 references:
-  - type: "article"
+  - type: article
     title: "R2G2: A Python-R Framework for Seamless Integration of R/Bioconductor Tools into Galaxy"
     authors:
-      - "Joshi, Jayadev"
-      - "Cumbo, Fabio"
-      - "Blankenberg, Daniel"
+      - family-names: "Joshi"
+        given-names: "Jayadev"
+      - family-names: "Cumbo"
+        given-names: "Fabio"
+      - family-names: "Blankenberg"
+        given-names: "Daniel"
     year: 2025
-    journal: "<In preparation>"
-    affiliation: "Center for Computational Life Sciences, Cleveland Clinic Research, Cleveland Clinic, Cleveland, OH, USA"
-
-repository-code: "https://github.com/BlankenbergLab/r2g2"
+    journal-title: "In preparation"
