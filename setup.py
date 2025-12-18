@@ -14,6 +14,7 @@ setup(
             'r2g2-script=r2g2.scripts.r2g2_script:run_main',
         ],
     },
-    author="Jayadev Joshi",
+    include_package_data=True,
+    author="Jayadev Joshi, Fabio Cumbo, Daniel Blankenberg",
     description="A tool to convert R scripts and packages to Galaxy wrappers",
 )
