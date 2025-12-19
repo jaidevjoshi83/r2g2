@@ -6,7 +6,9 @@ setup(
     packages=find_packages(),
     install_requires=[
         "rpy2>=3.6.1",
-        "jinja2"
+        "jinja2",
+        "requests",
+        "packaging"
     ],
     entry_points={
         'console_scripts': [
