@@ -53,7 +53,7 @@ Automatically Parsed R Help
 <citations>
 </citations>
 </tool>
-<!-- Created automatically using R2-G2: https://github.com/blankenberg/r2g2 -->
+<!-- Created automatically using R2-G2: https://github.com/BlankenbergLab/r2g2 -->
 '''
 
 # Input parameter templates

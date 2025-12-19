@@ -140,10 +140,12 @@ MACROS_TEMPLATE = """<macros>
 </macros>
 """
 
-galaxy_tool_citation ='''@ARTICLE{Blankenberg20-anvio,
-   author = {Daniel Blankenberg Lab, et al},
-   title = {In preparation..},
-   }'''
+galaxy_tool_citation ='''@ARTICLE{Joshi_R2G2-2025,
+  title     = {R2G2: A Python--R Framework for Seamless Integration of R/Bioconductor Tools into Galaxy},
+  author    = {Joshi, Jayadev and Cumbo, Fabio and Blankenberg, Daniel},
+  affiliation = {Center for Computational Life Sciences, Cleveland Clinic Research, Cleveland Clinic, Cleveland, OH, USA},
+  journal   = {<In preparation>}
+}'''
 
 
 class Parameter( object ):
