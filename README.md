@@ -62,7 +62,7 @@ options:
                         List of input parameters to be treated as data inputs, comma separated. Ex. 'input_file,reference_data'
 ```
 
-# Provide Input and out parameter using the "--USER_DEFINE_OUTPUT_PARAM" and i "--USER_DEFINE_INPUT_PARAM" an example is provide bellow: 
+### Provide Input and out parameter using the "--USER_DEFINE_OUTPUT_PARAM" and i "--USER_DEFINE_INPUT_PARAM" an example is provide bellow: 
 
 ```
 r2g2-script -r ./tests/test_r_scripts/DEP_data_preprocessing.r -i 'input_dat,input_data_exp_design' --user_define_output_param 'output_argument:output_RDS_data,name:output_RDS_data,format:rds,label:Path to input proteomics data file,from_work_directory' -o out_test
