@@ -226,7 +226,7 @@ def run_main():
     parser.add_argument('-v', '--tool_version', required=False,  default='0.0.1', help="Galaxy tool version..")
     parser.add_argument('-c', '--citation_doi', required=False,  default=None, help="Comma separated Citation DOI.")
     parser.add_argument('-u', '--user_define_output_param', required=False, default=False, help="Rather guessing output params, user can define output params in specific format. Ex. 'name:protein,format:pdb,label:protein file,from_work_directory;name:ligand,format:pdb,label:ligand file,from_work_directory'")
-    parser.add_argument('--user_define_input_param', required=False, default=None, help="List of input parameters to be treated as data inputs, comma separated. Ex. 'input_file,reference_data'")
+    parser.add_argument('-i', '--user_define_input_param', required=False, default=None, help="List of input parameters to be treated as data inputs, comma separated. Ex. 'input_file,reference_data'")
 
     args = parser.parse_args()
 

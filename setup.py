@@ -16,4 +16,6 @@ setup(
     },
     author="Jayadev Joshi",
     description="A tool to convert R scripts and packages to Galaxy wrappers",
+    license="MIT",
+    license_files=["LICENSE"],
 )

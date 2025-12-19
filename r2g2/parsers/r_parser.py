@@ -808,7 +808,11 @@ def output_param_generator_from_argparse(string):
         out["name"] = normalize_argument(out["output_argument"])
 
         if not "None" == out["output_argument"]:
-            output_command.append(f'{out["output_argument"]} "${out["name"]}"\n')
+            # Ensure the output_argument is formatted as a CLI flag (prepend -- if not present)
+            cli_flag = out["output_argument"]
+            if not cli_flag.startswith("--"):
+                full_cli_flag = f'--{cli_flag}'
+            output_command.append(f'{full_cli_flag} "${cli_flag}"\n')
             output_args.append(out["output_argument"])
         else:
             raise ValueError("Output dataset argument is not defined in the user-defined parameters.")
