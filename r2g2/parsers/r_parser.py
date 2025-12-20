@@ -27,10 +27,11 @@ class ParameterData(Parameter):
     
     def to_xml_param(self):
         data_format = self.info_dict.get('data_format', 'txt')
+        label = self.info_dict.get('label', self.get_label())
         return """<param name=%s type="data" format="%s" label=%s optional="%s" argument=%s help=%s/>""" % (
                 quoteattr( self.get_input_cmd_name() ), 
                 data_format,
-                self.get_label(), 
+                quoteattr(label), 
                 self.get_optional(),
                 self.get_argument(), 
                 self.get_help(),
@@ -261,6 +262,8 @@ class CustomFakeArg(FakeArg):
                 if self.clean_arg_name(opt) == d.name:
                     if d.name in self.data_params:
                          d.info_dict['data_format'] = self.data_params[d.name].get('format', 'txt')
+                         if 'label' in self.data_params[d.name]:
+                             d.info_dict['label'] = self.data_params[d.name]['label']
                          d = ParameterData(d.name, d.arg_short, d.arg_long, d.info_dict)
                     xml_str = d.to_xml_param()
                     if flat:
@@ -812,7 +815,10 @@ def output_param_generator_from_argparse(string):
             cli_flag = out["output_argument"]
             if not cli_flag.startswith("--"):
                 full_cli_flag = f'--{cli_flag}'
-            output_command.append(f'{full_cli_flag} "${cli_flag}"\n')
+            else:
+                full_cli_flag = cli_flag
+            
+            output_command.append(f'{full_cli_flag} "${out["name"]}"\n')
             output_args.append(out["output_argument"])
         else:
             raise ValueError("Output dataset argument is not defined in the user-defined parameters.")
