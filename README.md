@@ -3,7 +3,7 @@
 ```
 conda create  -n r2g2 -c conda-forge rpy2=3.6.2 r-base=4.4.3 python=3.12.11 r-r6=2.6.1 r-argparse=2.2.5 r-r6=2.6.1 r-argparse=2.2.5
 conda activate r2g2
-pip install . 
+pip install r2g2==0.1.1
 
 ```
 
